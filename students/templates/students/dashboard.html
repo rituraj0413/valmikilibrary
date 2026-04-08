@@ -1,0 +1,227 @@
+{% extends 'students/base.html' %}
+{% block title %}Dashboard — Valmiki Library{% endblock %}
+
+{% block content %}
+<style>
+  .shift-bar  { background: var(--bg-deep); border-radius: 10px; padding: 20px; border: 1px solid var(--border); }
+  .shift-row  { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .shift-row:last-child { margin-bottom: 0; }
+  .progress-bar-bg { background: var(--border); border-radius: 6px; height: 8px; flex: 1; margin: 0 14px; overflow: hidden; }
+  .progress-fill   { height: 100%; border-radius: 6px; }
+  .quick-link {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px; text-align: center; text-decoration: none; color: var(--text-main);
+    display: block; transition: all 0.2s;
+  }
+  .quick-link:hover { border-color: #4f46e5; background: var(--bg-deep); color: var(--text-main); transform: translateY(-2px); }
+  .quick-link .ql-icon { font-size: 28px; margin-bottom: 8px; }
+  .quick-link .ql-text { font-size: 13px; color: var(--text-muted); }
+</style>
+
+<!-- Welcome -->
+<div class="mb-4">
+  <h3 style="font-weight:700">Good day, Admin 👋</h3>
+  <p style="color:var(--text-muted);font-size:14px">{{ current_month }} — Here's your library at a glance</p>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <a href="{% url 'student_list' %}" class="stat-card">
+      <div class="stat-icon">👥</div>
+      <div class="stat-value">{{ total_students }}</div>
+      <div class="stat-label">Total Students</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3">
+    <a href="{% url 'seating_chart' %}" class="stat-card">
+      <div class="stat-icon">🪑</div>
+      <div class="stat-value" style="color:#4ade80">{{ vacant_seats }}</div>
+      <div class="stat-label">Vacant Seats</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3">
+    <a href="{% url 'payment_ledger' %}" class="stat-card">
+      <div class="stat-icon">✅</div>
+      <div class="stat-value" style="color:#4ade80">{{ paid_this_month }}</div>
+      <div class="stat-label">Paid This Month</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3">
+    <a href="{% url 'defaulters' %}" class="stat-card">
+      <div class="stat-icon">⚠️</div>
+      <div class="stat-value" style="color:#f87171">{{ defaulters_count }}</div>
+      <div class="stat-label">Defaulters</div>
+    </a>
+  </div>
+</div>
+
+<!-- Middle Row -->
+<div class="row g-3 mb-4">
+
+  <!-- Shift Breakdown -->
+  <div class="col-md-5">
+    <div class="section-title">Shift Breakdown</div>
+    <div class="shift-bar">
+      <div class="shift-row">
+        <span style="font-size:14px">☀️ Morning</span>
+        <div class="progress-bar-bg">
+          <div class="progress-fill" style="width:{% if total_students %}{% widthratio morning_count total_students 100 %}{% else %}0{% endif %}%;background:#1d6fa4"></div>
+        </div>
+        <span style="color:#5bc0eb;font-weight:600">{{ morning_count }}</span>
+      </div>
+      <div class="shift-row">
+        <span style="font-size:14px">🌙 Evening</span>
+        <div class="progress-bar-bg">
+          <div class="progress-fill" style="width:{% if total_students %}{% widthratio evening_count total_students 100 %}{% else %}0{% endif %}%;background:#7b2d8b"></div>
+        </div>
+        <span style="color:#d66aff;font-weight:600">{{ evening_count }}</span>
+      </div>
+      <div class="shift-row">
+        <span style="font-size:14px">🕐 Full Day</span>
+        <div class="progress-bar-bg">
+          <div class="progress-fill" style="width:{% if total_students %}{% widthratio fullday_count total_students 100 %}{% else %}0{% endif %}%;background:#a84432"></div>
+        </div>
+        <span style="color:#ff7b5e;font-weight:600">{{ fullday_count }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Seat Occupancy -->
+  <div class="col-md-4">
+    <div class="section-title">Seat Occupancy</div>
+    <div class="shift-bar text-center">
+      <div style="font-size:52px;font-weight:700;color:#4f46e5">{{ occupied_seats }}%</div>
+      <div style="color:var(--text-muted);font-size:13px">{{ occupied_seats }} of 100 seats occupied</div>
+      <div class="progress-bar-bg mt-3" style="height:12px">
+        <div class="progress-fill" style="width:{{ occupied_seats }}%;background:#4f46e5"></div>
+      </div>
+      <div class="d-flex justify-content-between mt-2" style="font-size:12px;color:var(--text-muted)">
+        <span>0</span><span>100</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="col-md-3">
+    <div class="section-title">Quick Actions</div>
+    <div class="d-flex flex-column gap-2">
+      <a href="{% url 'add_student' %}"    class="quick-link"><div class="ql-icon">➕</div><div class="ql-text">Add Student</div></a>
+      <a href="{% url 'payment_ledger' %}" class="quick-link"><div class="ql-icon">📒</div><div class="ql-text">Update Payments</div></a>
+      <a href="{% url 'defaulters' %}"     class="quick-link"><div class="ql-icon">⚠️</div><div class="ql-text">View Defaulters</div></a>
+    </div>
+  </div>
+</div>
+
+<!-- Earnings Section -->
+<div class="section-title mt-4">💰 Earnings — {{ current_month }}</div>
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-icon">💰</div>
+      <div class="stat-value" style="color:#4ade80">₹{{ monthly_earning }}</div>
+      <div class="stat-label">Collected This Month</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-icon">🎯</div>
+      <div class="stat-value">₹{{ expected_monthly }}</div>
+      <div class="stat-label">Expected This Month</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-icon">⏳</div>
+      <div class="stat-value" style="color:#f87171">₹{{ pending_amount }}</div>
+      <div class="stat-label">Pending Amount</div>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Mode Breakdown -->
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px">
+      <div class="section-title">Payment Mode</div>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span>💵 Cash</span>
+        <strong>{{ cash_students }} students</strong>
+      </div>
+      <div style="background:var(--border);border-radius:6px;height:8px;margin-bottom:14px">
+        <div style="height:100%;border-radius:6px;background:#f59e0b;
+          width:{% if total_students %}{% widthratio cash_students total_students 100 %}{% else %}0{% endif %}%">
+        </div>
+      </div>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span>📱 Online</span>
+        <strong>{{ online_students }} students</strong>
+      </div>
+      <div style="background:var(--border);border-radius:6px;height:8px">
+        <div style="height:100%;border-radius:6px;background:#4f46e5;
+          width:{% if total_students %}{% widthratio online_students total_students 100 %}{% else %}0{% endif %}%">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px">
+      <div class="section-title">Collection Rate</div>
+      <div style="font-size:48px;font-weight:700;color:#4f46e5;text-align:center">
+        {% if expected_monthly %}
+          {% widthratio monthly_earning expected_monthly 100 %}%
+        {% else %}
+          0%
+        {% endif %}
+      </div>
+      <div style="text-align:center;color:var(--text-muted);font-size:13px">
+        ₹{{ monthly_earning }} collected of ₹{{ expected_monthly }} expected
+      </div>
+      <div style="background:var(--border);border-radius:6px;height:10px;margin-top:12px">
+        <div style="height:100%;border-radius:6px;background:linear-gradient(90deg,#4f46e5,#4ade80);
+          width:{% if expected_monthly %}{% widthratio monthly_earning expected_monthly 100 %}{% else %}0{% endif %}%">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Recent Students -->
+<div class="section-title">Recently Added Students</div>
+<div style="background:var(--bg-card);border-radius:14px;border:1px solid var(--border);overflow:hidden">
+  <table class="vl-table">
+    <thead>
+      <tr>
+        <th>Name</th><th>Seat</th><th>Shift</th>
+        <th>Contact</th><th>Joined</th><th>Fee</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for student in recent_students %}
+      <tr>
+        <td style="font-weight:500">{{ student.name }}</td>
+        <td>{{ student.seat_number }}</td>
+        <td>
+          <span class="badge-shift {% if student.shift == 'Morning' %}morning{% elif student.shift == 'Evening' %}evening{% else %}fullday{% endif %}">
+            {{ student.shift }}
+          </span>
+        </td>
+        <td style="color:var(--text-muted)">{{ student.contact }}</td>
+        <td style="color:var(--text-muted)">{{ student.joining_date }}</td>
+        <td style="color:#4ade80">₹{{ student.monthly_fee }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="text-center" style="color:var(--text-muted);padding:30px">
+        No students yet. <a href="{% url 'add_student' %}" style="color:#4f46e5">Add your first student →</a>
+      </td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="text-center mt-4" style="color:var(--text-muted);font-size:12px">
+  Valmiki Library Management System · Built with Django by RITU RAJ
+</div>
+{% endblock %}

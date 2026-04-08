@@ -1,0 +1,69 @@
+{% extends 'students/base.html' %}
+{% block title %}Add Student — Valmiki Library{% endblock %}
+
+{% block content %}
+<div style="max-width:520px;margin:0 auto">
+  <h3 style="font-weight:700;margin-bottom:28px">➕ Add New Student</h3>
+
+  {% if error %}
+  <div style="background:#4d1a1a;color:#f87171;border-radius:8px;padding:12px 16px;
+              margin-bottom:20px;border:1px solid #7f1d1d;font-size:14px">
+    {{ error }}
+  </div>
+  {% endif %}
+
+  <div style="background:var(--bg-card);border-radius:14px;border:1px solid var(--border);padding:28px">
+    <form method="POST">
+      {% csrf_token %}
+
+      <label class="vl-label">Full Name</label>
+      <input type="text" name="name" class="vl-input" placeholder="Enter full name" required>
+
+      <label class="vl-label">Contact Number</label>
+      <input type="text" name="contact" class="vl-input" placeholder="Enter phone number" required>
+
+      <label class="vl-label">Seat Number (1–100)</label> 
+      <input type="number"
+       name="seat_number"
+       class="vl-input"
+       min="1"
+       max="100"
+       placeholder="1–100"
+       value="{{ seat }}"
+       required>
+
+<div style="font-size:11px;color:var(--text-muted);margin-top:-16px;margin-bottom:16px">
+  ⚠️ Only seats 1–100 are valid.
+</div>
+      <label class="vl-label">Shift</label>
+      <select name="shift" class="vl-input">
+        <option>Morning</option>
+        <option>Evening</option>
+        <option>Full Day</option>
+      </select>
+
+      <label class="vl-label">Joining Date</label>
+      <input type="date" name="joining_date" class="vl-input" required>
+
+      <label class="vl-label">Monthly Fee (₹)</label>
+      <input type="number" name="monthly_fee" class="vl-input" value="500" required>
+
+      <label class="vl-label">Mode of Payment</label>
+      <select name="mode_of_payment" class="vl-input">
+        <option value="Cash">💵 Cash</option>
+        <option value="Online">📱 Online</option>
+      </select>
+
+      <button type="submit"
+        style="width:100%;background:#4f46e5;color:white;border:none;border-radius:8px;
+               padding:13px;font-size:16px;font-weight:600;cursor:pointer;margin-top:4px">
+        Save Student →
+      </button>
+      <a href="{% url 'student_list' %}"
+         style="display:block;text-align:center;margin-top:14px;color:var(--text-muted);font-size:14px">
+        Cancel
+      </a>
+    </form>
+  </div>
+</div>
+{% endblock %}

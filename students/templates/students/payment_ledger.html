@@ -1,0 +1,196 @@
+{% load custom_filters %}
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Payment Ledger — Valmiki Library</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #1a1a2e; color: white; }
+
+    .ledger-table { font-size: 13px; }
+
+    .ledger-table th {
+      background: #16213e;
+      color: #aaa;
+      text-align: center;
+      padding: 10px 6px;
+      white-space: nowrap;
+    }
+
+    .ledger-table td {
+      text-align: center;
+      padding: 8px 4px;
+      vertical-align: middle;
+    }
+
+    .ledger-table tr:hover { background: rgba(255,255,255,0.04); }
+
+    .cell-paid {
+      background: #1a4d2e;
+      color: #4ade80;
+      border-radius: 6px;
+      font-size: 18px;
+      cursor: pointer;
+      display: block;
+      margin: auto;
+      width: 34px;
+      height: 34px;
+      line-height: 34px;
+      text-decoration: none;
+      transition: transform 0.15s;
+    }
+    .cell-paid:hover { transform: scale(1.2); color: #4ade80; }
+
+    .cell-unpaid {
+      background: #4d1a1a;
+      color: #f87171;
+      border-radius: 6px;
+      font-size: 18px;
+      cursor: pointer;
+      display: block;
+      margin: auto;
+      width: 34px;
+      height: 34px;
+      line-height: 34px;
+      text-decoration: none;
+      transition: transform 0.15s;
+    }
+    .cell-unpaid:hover { transform: scale(1.2); color: #f87171; }
+
+    .cell-before {
+      color: #444;
+      font-size: 16px;
+      display: block;
+      width: 34px;
+      height: 34px;
+      line-height: 34px;
+      margin: auto;
+    }
+
+    .student-name { text-align: left; font-weight: 500; white-space: nowrap; }
+    .shift-badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 20px;
+      margin-left: 6px;
+    }
+    .morning { background: #1d6fa4; }
+    .evening { background: #7b2d8b; }
+    .fullday { background: #a84432; }
+
+    .summary-paid   { color: #4ade80; font-weight: bold; }
+    .summary-unpaid { color: #f87171; font-weight: bold; }
+  </style>
+</head>
+<body class="p-4">
+<div class="container-fluid">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+      <h2>📒 Payment Ledger</h2>
+      <p class="text-secondary mb-0">Click ✓ or ✗ to toggle payment status</p>
+    </div>
+    <div class="d-flex gap-2 align-items-center flex-wrap">
+      <!-- Year selector -->
+      <form method="GET" class="d-flex align-items-center gap-2">
+        <label class="text-secondary mb-0">Year:</label>
+        <select name="year" class="form-select form-select-sm bg-dark text-white border-secondary"
+                style="width:100px" onchange="this.form.submit()">
+          {% for y in years %}
+            <option value="{{ y }}" {% if y == current_year %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </form>
+      <a href="{% url 'student_list' %}" class="btn btn-outline-light btn-sm">👥 Students</a>
+      <a href="{% url 'seating_chart' %}" class="btn btn-outline-light btn-sm">🪑 Seats</a>
+    </div>
+  </div>
+
+  <!-- Defaulters summary -->
+  {% with defaulters=ledger %}
+  <div class="row mb-4 g-3">
+    <div class="col-auto">
+      <div class="p-3 rounded" style="background:#1a4d2e;min-width:140px">
+        <div style="font-size:22px;font-weight:bold;color:#4ade80">
+          {{ ledger|length }}
+        </div>
+        <div style="font-size:12px;color:#86efac">Total Students</div>
+      </div>
+    </div>
+  </div>
+  {% endwith %}
+
+  <!-- Ledger Table -->
+  <div style="overflow-x:auto">
+    <table class="table table-dark table-bordered ledger-table">
+      <thead>
+        <tr>
+          <th style="text-align:left;min-width:180px">Student</th>
+          <th>Seat</th>
+          {% for month in months %}
+            <th>{{ month }}</th>
+          {% endfor %}
+          <th>Paid</th>
+          <th>Due</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in ledger %}
+        <tr>
+          <td class="student-name">
+            {{ row.student.name }}
+            <span class="shift-badge
+              {% if row.student.shift == 'Morning' %}morning
+              {% elif row.student.shift == 'Evening' %}evening
+              {% else %}fullday{% endif %}">
+              {{ row.student.shift }}
+            </span>
+          </td>
+          <td>{{ row.student.seat_number }}</td>
+
+          {% for status in row.months %}
+            <td>
+              {% if status == 'before' %}
+                <span class="cell-before">—</span>
+              {% elif status == 'paid' %}
+                <a href="{% url 'mark_payment' row.student.pk forloop.counter current_year %}"
+                   class="cell-paid" title="Click to mark unpaid">✓</a>
+              {% else %}
+                <a href="{% url 'mark_payment' row.student.pk forloop.counter current_year %}"
+                   class="cell-unpaid" title="Click to mark paid">✗</a>
+              {% endif %}
+            </td>
+          {% endfor %}
+
+          <!-- Count paid months -->
+          <td class="summary-paid">
+            {% for s in row.months %}
+              {% if s == 'paid' %}
+                <span style="color:#4ade80">✓</span>
+              {% endif %}
+            {% endfor %}
+          </td>
+          
+          <td class="summary-unpaid">
+            {% for s in row.months %}
+              {% if s == 'unpaid' %}
+                <span style="color:#f87171">✗</span>
+              {% endif %}
+            {% endfor %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="16" class="text-center text-secondary py-4">
+            No students found. <a href="{% url 'add_student' %}">Add students first.</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+</body>
+</html>

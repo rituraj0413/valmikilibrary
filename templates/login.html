@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login — Valmiki Library</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #1a1a2e;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: sans-serif;
+    }
+
+    .login-card {
+      background: #16213e;
+      border-radius: 16px;
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 420px;
+      border: 1px solid #2a2a4a;
+    }
+
+    .logo {
+      font-size: 48px;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    h2 {
+      text-align: center;
+      color: white;
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 32px;
+    }
+
+    label {
+      color: #aaa;
+      font-size: 13px;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    input {
+      width: 100%;
+      background: #0f0f23;
+      border: 1px solid #2a2a4a;
+      border-radius: 8px;
+      padding: 12px 14px;
+      color: white;
+      font-size: 15px;
+      margin-bottom: 20px;
+      outline: none;
+      transition: border 0.2s;
+    }
+    input:focus { border-color: #4f46e5; }
+
+    .login-btn {
+      width: 100%;
+      background: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 13px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .login-btn:hover { background: #4338ca; }
+
+    .error-msg {
+      background: #4d1a1a;
+      color: #f87171;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      border: 1px solid #7f1d1d;
+    }
+
+    .footer-text {
+      text-align: center;
+      color: #444;
+      font-size: 12px;
+      margin-top: 24px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-card">
+    <div class="logo">📚</div>
+    <h2>Valmiki Library</h2>
+    <p class="subtitle">Admin Dashboard — Please sign in</p>
+
+    {% if form.errors %}
+    <div class="error-msg">
+      ❌ Incorrect username or password. Please try again.
+    </div>
+    {% endif %}
+
+    <form method="POST">
+      {% csrf_token %}
+
+      <label>Username</label>
+      <input type="text" name="username" placeholder="Enter username" autofocus required>
+
+      <label>Password</label>
+      <input type="password" name="password" placeholder="Enter password" required>
+
+      <button type="submit" class="login-btn">Sign In →</button>
+    </form>
+
+    <p class="footer-text">Only authorized admins can access this system.</p>
+  </div>
+
+</body>
+</html>

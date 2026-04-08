@@ -1,0 +1,156 @@
+{% extends 'students/base.html' %}
+{% block title %}Seating Chart — Valmiki Library{% endblock %}
+
+{% block content %}
+
+<style>
+.seat {
+  width: 80px; height: 80px;
+  border-radius: 10px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  font-size: 11px; font-weight: bold;
+  cursor: pointer; transition: 0.2s;
+  border: 2px solid transparent;
+}
+.seat:hover { transform: scale(1.08); }
+
+.vacant { background:#2a2a2a; border-color:#444; color:#888; }
+.has-students { background:#1a2a1a; border-color:#4ade80; }
+
+.seat-num { font-size:16px; font-weight:700; }
+
+.modal-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.7);
+  z-index:999; align-items:center; justify-content:center;
+}
+.modal-overlay.open { display:flex; }
+
+.modal-box {
+  background:#1e293b;
+  border-radius:16px;
+  padding:24px;
+  width:100%; max-width:450px;
+}
+
+.student-card {
+  background:#0f172a;
+  border-radius:10px;
+  padding:12px;
+  margin-bottom:10px;
+  border-left:4px solid;
+}
+.morning { border-color:#5bc0eb; }
+.evening { border-color:#d66aff; }
+.fullday { border-color:#ff7b5e; }
+
+.add-btn {
+  display:block; text-align:center;
+  padding:10px;
+  background:#4f46e5;
+  color:white;
+  border-radius:8px;
+  text-decoration:none;
+}
+</style>
+
+<h3>🪑 Seating Chart</h3>
+
+<div class="d-flex flex-wrap gap-2 mt-4">
+{% for seat in seat_numbers %}
+  <div class="seat {% if seat in seat_map %}has-students{% else %}vacant{% endif %}"
+       onclick="openModal('{{ seat }}')">
+    <div class="seat-num">{{ seat }}</div>
+    {% if seat not in seat_map %}
+      <small>vacant</small>
+    {% endif %}
+  </div>
+{% endfor %}
+</div>
+
+<!-- MODAL -->
+<div id="modal" class="modal-overlay">
+  <div class="modal-box">
+    <h5 id="modalTitle"></h5>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- DATA -->
+<script>
+const seatData = {
+{% for seat, shifts in seat_map.items %}
+  "{{ seat }}": {
+    {% for shift, student in shifts.items %}
+    "{{ shift }}": {
+      id: "{{ student.id }}",
+      name: "{{ student.name }}",
+      contact: "{{ student.contact }}",
+      fee: "{{ student.monthly_fee }}",
+      mode: "{{ student.mode_of_payment }}",
+      joined: "{{ student.joining_date }}"
+    },
+    {% endfor %}
+  },
+{% endfor %}
+};
+</script>
+
+<!-- JS -->
+<script>
+function openModal(seat) {
+  const modal = document.getElementById('modal');
+  const title = document.getElementById('modalTitle');
+  const body  = document.getElementById('modalBody');
+
+  title.innerText = "Seat " + seat;
+  let html = "";
+
+  if (seatData[seat]) {
+    const shifts = seatData[seat];
+
+    for (let shift in shifts) {
+      const st = shifts[shift];
+
+      html += `
+        <div class="student-card ${shift.toLowerCase().replace(' ', '')}">
+          <strong>${st.name}</strong> (${shift})<br>
+          📞 ${st.contact}<br>
+          💰 ₹${st.fee}<br>
+
+          <a href="/delete/${st.id}/"
+             onclick="return confirm('Delete student?')"
+             style="background:#dc2626;color:white;padding:5px 10px;
+                    border-radius:6px;display:inline-block;margin-top:6px;text-decoration:none">
+             Delete
+          </a>
+        </div>
+      `;
+    }
+
+    const taken = Object.keys(shifts);
+
+    if (!taken.includes("Full Day") && taken.length < 2) {
+      html += `<a href="/add/?seat=${seat}" class="add-btn">+ Add Student</a>`;
+    } else {
+      html += `<p style="text-align:center;color:gray">Seat full</p>`;
+    }
+
+  } else {
+    html = `
+      <p style="text-align:center">Vacant Seat</p>
+      <a href="/add/?seat=${seat}" class="add-btn">+ Add Student</a>
+    `;
+  }
+
+  body.innerHTML = html;
+  modal.classList.add("open");
+}
+
+document.getElementById("modal").onclick = function(e){
+  if(e.target.id === "modal") this.classList.remove("open");
+}
+</script>
+
+{% endblock %}

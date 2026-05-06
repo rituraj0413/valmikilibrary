@@ -2,14 +2,33 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('',                        views.dashboard,      name='dashboard'),      # ← CHANGED
-    path('students/',               views.student_list,   name='student_list'),   # ← CHANGED
+    path('dashboard/',              views.dashboard,             name='dashboard'),
+    path('students/',               views.student_list,          name='student_list'),
+    path('student-detail/',        views.student_detail,        name='student_detail'),
     path('add/',                    views.add_student,    name='add_student'),
+    path('students/<int:pk>/edit/', views.edit_student,   name='edit_student'),
     path('delete/<int:pk>/',        views.delete_student, name='delete_student'),
     path('seats/',                  views.seating_chart,  name='seating_chart'),
     path('ledger/',                 views.payment_ledger, name='payment_ledger'),
+    path('payments/<int:student_id>/<int:year>/<int:month>/', views.payment_entry, name='payment_entry'),
+    path('payments/receipt/<int:payment_id>/', views.payment_receipt_pdf, name='payment_receipt_pdf'),
     path('mark/<int:student_id>/<int:month>/<int:year>/',
                                     views.mark_payment,   name='mark_payment'),
     path('defaulters/',             views.defaulters,     name='defaulters'),
-    path('export/', views.export_students_excel, name='export_students_excel'),
+    path('reminders/',              views.monthly_reminders,     name='monthly_reminders'),
+    path('reports/',                views.reports_dashboard,     name='reports_dashboard'),
+    path('reports/export/',         views.export_report,         name='export_report'),
+    path('export/',                 views.export_students_excel, name='export_students_excel'),
+    path('export/pdf/',             views.export_students_pdf,   name='export_students_pdf'),
+    path('student-portal/login/',   views.student_portal_login,      name='student_portal_login'),
+    path('student-portal/verify/<str:token>/', views.student_verify_email, name='student_verify_email'),
+    path('student-portal/dashboard/', views.student_portal_dashboard, name='student_portal_dashboard'),
+    path('student-portal/mentorship/', views.student_portal_mentorship, name='student_portal_mentorship'),
+    path('student-portal/logout/',  views.student_portal_logout,     name='student_portal_logout'),
+    path('mentor-portal/register/', views.mentor_portal_register,    name='mentor_portal_register'),
+    path('mentor-portal/login/',    views.mentor_portal_login,       name='mentor_portal_login'),
+    path('mentor-portal/verify/<str:token>/', views.mentor_verify_email, name='mentor_verify_email'),
+    path('mentor-portal/dashboard/', views.mentor_portal_dashboard,  name='mentor_portal_dashboard'),
+    path('mentor-portal/logout/',   views.mentor_portal_logout,      name='mentor_portal_logout'),
+    path('mentor-portal/sessions/<int:session_id>/', views.mentor_session_detail, name='mentor_session_detail'),
 ]

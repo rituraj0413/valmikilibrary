@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mentor Registration — Valmiki Library</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --green-950: #08170f;
+      --green-900: #10251a;
+      --green-800: #163726;
+      --green-700: #215338;
+      --green-500: #4aa26d;
+      --green-300: #b8dec3;
+      --green-200: #dceddf;
+      --white-soft: #f8fcf8;
+      --text-soft: rgba(248, 252, 248, 0.72);
+      --border-soft: rgba(184, 222, 195, 0.14);
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--white-soft);
+      font-family: "Manrope", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(184, 222, 195, 0.14), transparent 30%),
+        linear-gradient(140deg, #06110b 0%, #10251a 42%, #163726 100%);
+    }
+
+    .shell {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 34px 20px 54px;
+    }
+
+    .panel {
+      border-radius: 28px;
+      padding: 28px;
+      border: 1px solid var(--border-soft);
+      background: linear-gradient(180deg, rgba(18, 43, 29, 0.95), rgba(12, 30, 20, 0.98));
+      box-shadow: 0 28px 80px rgba(2, 10, 6, 0.32);
+      backdrop-filter: blur(18px);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+      color: var(--green-200);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    h1 {
+      margin: 16px 0 10px;
+      font-size: clamp(2.4rem, 5vw, 4rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+    }
+
+    .subtitle {
+      max-width: 720px;
+      color: var(--text-soft);
+      font-size: 15px;
+      line-height: 1.8;
+      margin-bottom: 0;
+    }
+
+    .info-card {
+      height: 100%;
+    }
+
+    .detail-box {
+      border-radius: 22px;
+      padding: 22px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+      height: 100%;
+    }
+
+    .detail-box h3,
+    .form-card h3 {
+      margin: 0 0 8px;
+      font-size: 1.1rem;
+      font-weight: 800;
+    }
+
+    .detail-box p,
+    .form-note {
+      color: var(--text-soft);
+      line-height: 1.75;
+      font-size: 14px;
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--green-200);
+    }
+
+    .control,
+    .control-file {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.05);
+      color: #ffffff;
+      padding: 14px 16px;
+      margin-bottom: 18px;
+      outline: none;
+    }
+
+    .control:focus,
+    .control-file:focus {
+      border-color: rgba(184, 222, 195, 0.36);
+      box-shadow: 0 0 0 3px rgba(184, 222, 195, 0.08);
+    }
+
+    textarea.control {
+      min-height: 126px;
+      resize: vertical;
+    }
+
+    .message {
+      border-radius: 18px;
+      padding: 14px 16px;
+      margin-bottom: 18px;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .message.note {
+      background: rgba(184, 222, 195, 0.1);
+      border: 1px solid rgba(184, 222, 195, 0.16);
+      color: var(--green-200);
+    }
+
+    .message.error {
+      background: rgba(46, 78, 56, 0.72);
+      border: 1px solid rgba(184, 222, 195, 0.12);
+      color: #ffffff;
+    }
+
+    .btn-premium,
+    .btn-outline-premium {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      border-radius: 16px;
+      padding: 14px 22px;
+      font-size: 14px;
+      font-weight: 800;
+      border: 1px solid transparent;
+      transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+    }
+
+    .btn-premium {
+      background: linear-gradient(135deg, var(--green-300) 0%, #ffffff 125%);
+      color: var(--green-900);
+    }
+
+    .btn-outline-premium {
+      background: rgba(255,255,255,0.04);
+      border-color: rgba(255,255,255,0.16);
+      color: #ffffff;
+    }
+
+    .btn-premium:hover,
+    .btn-outline-premium:hover {
+      transform: translateY(-2px);
+      color: inherit;
+    }
+
+    @media (max-width: 767px) {
+      .shell {
+        padding: 20px 14px 34px;
+      }
+
+      .panel {
+        padding: 22px;
+        border-radius: 24px;
+      }
+    }
+  </style>
+  {% include 'students/includes/portal_reference_theme.html' %}
+</head>
+<body>
+  <div class="shell">
+    <div class="panel mb-4">
+      <div class="eyebrow">Valmiki Library Mentorship</div>
+      <h1>Create your mentor profile</h1>
+      <p class="subtitle">
+        Build your verified mentor profile, share your job role and teaching strengths, set your daily or monthly pricing, and start taking online revision sessions with students.
+      </p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-lg-4">
+        <div class="panel info-card">
+          <div class="detail-box">
+            <h3>What students will see</h3>
+            <p>Your profile will show your role, experience, streams known, pricing, and the kind of preparation support you provide. Students can then request online mentorship sessions directly.</p>
+          </div>
+          <div class="detail-box mt-4">
+            <h3>Portal flow</h3>
+            <p>1. Create profile.</p>
+            <p>2. Verify your email.</p>
+            <p>3. Log in as mentor.</p>
+            <p>4. Add meeting links, questions, marks, and feedback for each student session.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-8">
+        <div class="panel form-card">
+          <h3>Mentor Details</h3>
+          <p class="form-note">Verified mentors can manage student practice sessions and progress reports from their own dashboard.</p>
+
+          {% if notice %}
+            <div class="message note">{{ notice }}</div>
+          {% endif %}
+          {% if error %}
+            <div class="message error">{{ error }}</div>
+          {% endif %}
+          {% if verification_link %}
+            <div class="message note">
+              Development verification link:
+              <a href="{{ verification_link }}" style="color:#ffffff;word-break:break-all">{{ verification_link }}</a>
+            </div>
+          {% elif show_debug_hint %}
+            <div class="message note">In local development, the verification link is also printed in the Django terminal.</div>
+          {% endif %}
+
+          <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="row">
+              <div class="col-md-6">
+                <label class="label">Full Name</label>
+                <input type="text" name="name" class="control" required>
+              </div>
+              <div class="col-md-6">
+                <label class="label">Email</label>
+                <input type="email" name="email" class="control" required>
+              </div>
+              <div class="col-md-6">
+                <label class="label">Phone Number</label>
+                <input type="text" name="contact" class="control" required>
+              </div>
+              <div class="col-md-6">
+                <label class="label">Job Role</label>
+                <input type="text" name="job_role" class="control" placeholder="Teacher, UPSC Mentor, Engineer, CA..." required>
+              </div>
+              <div class="col-md-6">
+                <label class="label">Current Work</label>
+                <input type="text" name="current_work" class="control" placeholder="Where you work or what you currently do">
+              </div>
+              <div class="col-md-6">
+                <label class="label">Experience (Years)</label>
+                <input type="number" min="0" name="experience_years" class="control" value="0">
+              </div>
+              <div class="col-md-6">
+                <label class="label">Primary Session Type</label>
+                <select name="primary_session_mode" class="control">
+                  {% for value, label in session_mode_choices %}
+                    <option value="{{ value }}">{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="label">Profile Photo</label>
+                <input type="file" name="profile_photo" class="control-file">
+              </div>
+              <div class="col-md-6">
+                <label class="label">Daily Session Price</label>
+                <input type="number" step="0.01" min="0" name="daily_session_price" class="control" value="0">
+              </div>
+              <div class="col-md-6">
+                <label class="label">Monthly Session Price</label>
+                <input type="number" step="0.01" min="0" name="monthly_session_price" class="control" value="0">
+              </div>
+              <div class="col-12">
+                <label class="label">Streams / Subjects / Exams You Know</label>
+                <textarea name="streams_known" class="control" required placeholder="UPSC GS, CSAT, SSC, Banking, Accounts, English speaking, Quant, Interview prep..."></textarea>
+              </div>
+              <div class="col-12">
+                <label class="label">Bio</label>
+                <textarea name="bio" class="control" placeholder="Describe how you conduct sessions, what kind of students you support, and how you help with revision practice."></textarea>
+              </div>
+            </div>
+
+            <div class="d-flex gap-3 flex-wrap mt-2">
+              <button type="submit" class="btn-premium">Create Mentor Profile</button>
+              <a href="{% url 'mentor_portal_login' %}" class="btn-outline-premium">Mentor Login</a>
+              <a href="{% url 'student_portal_login' %}" class="btn-outline-premium">Student Portal</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

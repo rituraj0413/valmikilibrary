@@ -1,4 +1,5 @@
 {% extends 'students/base.html' %}
+{% load custom_filters %}
 {% block title %}Seating Chart — Valmiki Library{% endblock %}
 
 {% block content %}
@@ -16,9 +17,12 @@
 .seat:hover { transform: scale(1.08); }
 
 .vacant { background:#2a2a2a; border-color:#444; color:#888; }
-.has-students { background:#1a2a1a; border-color:#4ade80; }
+.fully-occupied { background:#132a17; border-color:#4ade80; color:#dcfce7; }
+.full-day { background:#3a1630; border-color:#f472b6; color:#fce7f3; }
+.partially-vacant { background:#341313; border-color:#ef4444; color:#fee2e2; }
 
 .seat-num { font-size:16px; font-weight:700; }
+.seat-status { margin-top:4px; font-size:11px; text-transform:capitalize; }
 
 .modal-overlay {
   display:none; position:fixed; inset:0;
@@ -41,9 +45,35 @@
   margin-bottom:10px;
   border-left:4px solid;
 }
-.morning { border-color:#5bc0eb; }
-.evening { border-color:#d66aff; }
-.fullday { border-color:#ff7b5e; }
+.student-card.morning { border-color:#5bc0eb; color:inherit; }
+.student-card.evening { border-color:#d66aff; color:inherit; }
+.student-card.fullday { border-color:#ff7b5e; color:inherit; }
+
+.action-row {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:8px;
+}
+
+.action-btn {
+  padding:5px 10px;
+  border-radius:6px;
+  display:inline-block;
+  text-decoration:none;
+  font-size:12px;
+  font-weight:600;
+}
+
+.edit-btn {
+  background:#2563eb;
+  color:white;
+}
+
+.delete-btn {
+  background:#dc2626;
+  color:white;
+}
 
 .add-btn {
   display:block; text-align:center;
@@ -59,11 +89,19 @@
 
 <div class="d-flex flex-wrap gap-2 mt-4">
 {% for seat in seat_numbers %}
-  <div class="seat {% if seat in seat_map %}has-students{% else %}vacant{% endif %}"
+  <div class="seat {% if seat in seat_status_map %}{{ seat_status_map|get_item:seat }}{% else %}vacant{% endif %}"
        onclick="openModal('{{ seat }}')">
     <div class="seat-num">{{ seat }}</div>
-    {% if seat not in seat_map %}
-      <small>vacant</small>
+    {% if seat in seat_status_map %}
+      {% if seat_status_map|get_item:seat == 'fully-occupied' %}
+        <small class="seat-status">occupied</small>
+      {% elif seat_status_map|get_item:seat == 'full-day' %}
+        <small class="seat-status">full day</small>
+      {% else %}
+        <small class="seat-status">1 vacant</small>
+      {% endif %}
+    {% else %}
+      <small class="seat-status">vacant</small>
     {% endif %}
   </div>
 {% endfor %}
@@ -89,7 +127,9 @@ const seatData = {
       contact: "{{ student.contact }}",
       fee: "{{ student.monthly_fee }}",
       mode: "{{ student.mode_of_payment }}",
-      joined: "{{ student.joining_date }}"
+      joined: "{{ student.joining_date }}",
+      editUrl: "{% url 'edit_student' student.id %}",
+      deleteUrl: "{% url 'delete_student' student.id %}"
     },
     {% endfor %}
   },
@@ -118,13 +158,14 @@ function openModal(seat) {
           <strong>${st.name}</strong> (${shift})<br>
           📞 ${st.contact}<br>
           💰 ₹${st.fee}<br>
-
-          <a href="/delete/${st.id}/"
-             onclick="return confirm('Delete student?')"
-             style="background:#dc2626;color:white;padding:5px 10px;
-                    border-radius:6px;display:inline-block;margin-top:6px;text-decoration:none">
-             Delete
-          </a>
+          <div class="action-row">
+            <a href="${st.editUrl}" class="action-btn edit-btn">Edit</a>
+            <a href="${st.deleteUrl}"
+               onclick="return confirm('Delete student?')"
+               class="action-btn delete-btn">
+               Delete
+            </a>
+          </div>
         </div>
       `;
     }

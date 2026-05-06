@@ -1,0 +1,80 @@
+{% extends 'students/base.html' %}
+{% block title %}Payment Entry — Valmiki Library{% endblock %}
+
+{% block content %}
+<div style="max-width:760px;margin:0 auto">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h3 style="font-weight:700;margin-bottom:4px">🧾 Payment Entry</h3>
+      <div style="color:var(--text-muted);font-size:14px">{{ student.name }} · Seat {{ student.seat_number }} · {{ month_title }}</div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{% url 'payment_ledger' %}?year={{ year }}" class="btn btn-outline-light">← Back to Ledger</a>
+      {% if payment and payment.is_paid %}
+        <a href="{% url 'payment_receipt_pdf' payment.pk %}" class="btn btn-success">⬇ Receipt PDF</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:28px">
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="section-title">Student</div>
+        <div style="font-size:16px;font-weight:600">{{ student.name }}</div>
+      </div>
+      <div class="col-md-4">
+        <div class="section-title">Default Mode</div>
+        <div>{{ student.mode_of_payment }}</div>
+      </div>
+      <div class="col-md-4">
+        <div class="section-title">Monthly Fee</div>
+        <div style="color:#4ade80;font-weight:600">₹{{ student.monthly_fee }}</div>
+      </div>
+    </div>
+
+    <form method="POST">
+      {% csrf_token %}
+
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="vl-label">Payment Method</label>
+          <select name="payment_method" class="vl-input">
+            <option value="Cash" {% if suggested_method == 'Cash' %}selected{% endif %}>💵 Cash</option>
+            <option value="UPI" {% if suggested_method == 'UPI' %}selected{% endif %}>📲 UPI</option>
+            <option value="Online" {% if suggested_method == 'Online' %}selected{% endif %}>📱 Online</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="vl-label">Amount Received</label>
+          <input type="number" step="0.01" min="0" name="amount" class="vl-input" value="{{ suggested_amount }}" required>
+        </div>
+        <div class="col-md-4">
+          <label class="vl-label">Paid On</label>
+          <input type="date" name="paid_on" class="vl-input" value="{{ suggested_paid_on|date:'Y-m-d' }}" required>
+        </div>
+      </div>
+
+      {% if payment and payment.is_paid %}
+      <div style="background:#123524;border:1px solid #14532d;color:#86efac;border-radius:12px;padding:16px 18px;margin:10px 0 24px">
+        Payment already recorded.
+        Method: <strong>{{ payment.payment_method }}</strong>
+        · Amount: <strong>₹{{ payment.amount }}</strong>
+        · Receipt: <strong>{{ payment.receipt_number }}</strong>
+      </div>
+      {% else %}
+      <div style="background:#2f2308;border:1px solid #854d0e;color:#fcd34d;border-radius:12px;padding:16px 18px;margin:10px 0 24px">
+        Record this month as paid, then download the receipt PDF immediately.
+      </div>
+      {% endif %}
+
+      <div class="d-flex gap-2 flex-wrap">
+        <button type="submit" name="action" value="save" class="btn btn-primary">Save Payment</button>
+        <button type="submit" name="action" value="save_and_receipt" class="btn btn-success">Save and Download Receipt</button>
+        {% if payment and payment.is_paid %}
+          <button type="submit" name="action" value="mark_unpaid" class="btn btn-outline-danger" onclick="return confirm('Mark this month as unpaid?')">Mark Unpaid</button>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

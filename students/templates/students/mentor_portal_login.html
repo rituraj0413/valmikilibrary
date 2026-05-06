@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mentor Login — Valmiki Library</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      color: #f8fcf8;
+      font-family: "Manrope", sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(181, 221, 192, 0.14), transparent 28%),
+        linear-gradient(160deg, #07120b 0%, #10281b 45%, #163726 100%);
+    }
+
+    .card-shell {
+      width: 100%;
+      max-width: 540px;
+      border-radius: 30px;
+      padding: 30px;
+      background: linear-gradient(180deg, rgba(18, 43, 29, 0.96), rgba(12, 30, 20, 0.98));
+      border: 1px solid rgba(184, 222, 195, 0.14);
+      box-shadow: 0 28px 80px rgba(2, 10, 6, 0.34);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: #dceddf;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    h1 {
+      margin: 16px 0 8px;
+      font-size: 2.8rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+    }
+
+    .subtitle {
+      color: rgba(248, 252, 248, 0.72);
+      font-size: 15px;
+      line-height: 1.75;
+      margin-bottom: 24px;
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 8px;
+      color: #dceddf;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .control {
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.05);
+      color: #ffffff;
+      padding: 14px 16px;
+      margin-bottom: 18px;
+      outline: none;
+    }
+
+    .control:focus {
+      border-color: rgba(184, 222, 195, 0.3);
+      box-shadow: 0 0 0 3px rgba(184, 222, 195, 0.08);
+    }
+
+    .message {
+      border-radius: 18px;
+      padding: 14px 16px;
+      margin-bottom: 18px;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .message.note {
+      background: rgba(184, 222, 195, 0.1);
+      border: 1px solid rgba(184, 222, 195, 0.16);
+      color: #dceddf;
+    }
+
+    .message.error {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: #ffffff;
+    }
+
+    .btn-premium,
+    .btn-outline-premium {
+      border-radius: 16px;
+      padding: 14px 18px;
+      font-size: 14px;
+      font-weight: 800;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid transparent;
+      transition: transform 0.18s ease, background 0.18s ease;
+    }
+
+    .btn-premium {
+      background: linear-gradient(135deg, #b8dec3 0%, #ffffff 120%);
+      color: #10281b;
+    }
+
+    .btn-outline-premium {
+      background: rgba(255,255,255,0.04);
+      color: #ffffff;
+      border-color: rgba(255,255,255,0.14);
+    }
+
+    .btn-premium:hover,
+    .btn-outline-premium:hover {
+      transform: translateY(-2px);
+      color: inherit;
+    }
+  </style>
+  {% include 'students/includes/portal_reference_theme.html' %}
+</head>
+<body>
+  <div class="card-shell">
+    <div class="eyebrow">Mentor Portal</div>
+    <h1>Sign in</h1>
+    <p class="subtitle">
+      Verified mentors can log in here to schedule online sessions, add meeting links, ask revision questions, and mark student performance.
+    </p>
+
+    {% if notice %}
+      <div class="message note">{{ notice }}</div>
+    {% endif %}
+    {% if error %}
+      <div class="message error">{{ error }}</div>
+    {% endif %}
+    {% if verification_link %}
+      <div class="message note">
+        Development verification link:
+        <a href="{{ verification_link }}" style="color:#ffffff;word-break:break-all">{{ verification_link }}</a>
+      </div>
+    {% elif show_debug_hint %}
+      <div class="message note">In local development, verification links are also printed in the Django terminal.</div>
+    {% endif %}
+
+    <form method="POST">
+      {% csrf_token %}
+      <label class="label">Verified Email</label>
+      <input type="email" name="email" class="control" required>
+
+      <label class="label">Phone Number</label>
+      <input type="text" name="contact" class="control" required>
+
+      <div class="d-flex gap-2 flex-wrap">
+        <button type="submit" name="action" value="login" class="btn-premium flex-fill">Mentor Login</button>
+        <button type="submit" name="action" value="send_verification" class="btn-outline-premium flex-fill">Send Verification Email</button>
+      </div>
+    </form>
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mt-4">
+      <a href="{% url 'mentor_portal_register' %}" style="color:#dceddf;text-decoration:none;font-size:14px">Create mentor profile</a>
+      <a href="{% url 'student_portal_login' %}" style="color:#dceddf;text-decoration:none;font-size:14px">Student portal</a>
+      <a href="{% url 'login' %}" style="color:#dceddf;text-decoration:none;font-size:14px">Admin login</a>
+    </div>
+  </div>
+</body>
+</html>

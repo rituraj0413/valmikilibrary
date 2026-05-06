@@ -1,0 +1,436 @@
+{% extends 'students/base.html' %}
+{% block title %}Student Detail — Valmiki Library{% endblock %}
+
+{% block content %}
+<style>
+  .detail-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .summary-card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(249,251,255,0.96) 100%);
+    border-radius: 24px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-card);
+    padding: 22px;
+    height: 100%;
+  }
+
+  .summary-number {
+    font-family: "Sora", sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: var(--text-main);
+  }
+
+  .summary-label {
+    margin-top: 8px;
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .filter-card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(249,251,255,0.96) 100%);
+    border-radius: 24px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-card);
+    padding: 22px 24px;
+  }
+
+  .seat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 18px;
+  }
+
+  .seat-card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(249,251,255,0.96) 100%);
+    border-radius: 24px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-card);
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .seat-card.vacant {
+    border-style: dashed;
+  }
+
+  .seat-card.partially-vacant {
+    border-left: 4px solid #ef4444;
+  }
+
+  .seat-card.fully-occupied {
+    border-left: 4px solid #1ea66b;
+  }
+
+  .seat-card.full-day {
+    border-left: 4px solid #d946ef;
+  }
+
+  .seat-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .seat-name {
+    font-family: "Sora", sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-main);
+  }
+
+  .seat-meta {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-top: 6px;
+  }
+
+  .seat-status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 7px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .seat-status-badge.vacant {
+    background: #eef2f9;
+    color: #7b8ca8;
+  }
+
+  .seat-status-badge.partially-vacant {
+    background: #fff1f1;
+    color: #d96376;
+  }
+
+  .seat-status-badge.fully-occupied {
+    background: #ebfff4;
+    color: #1ea66b;
+  }
+
+  .seat-status-badge.full-day {
+    background: #fdeeff;
+    color: #c241c5;
+  }
+
+  .student-block {
+    background: #f7faff;
+    border: 1px solid rgba(102, 126, 174, 0.12);
+    border-radius: 18px;
+    padding: 18px;
+  }
+
+  .student-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+
+  .student-name {
+    font-family: "Sora", sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-main);
+  }
+
+  .student-subtitle {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-top: 5px;
+  }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 18px;
+  }
+
+  .detail-item {
+    min-width: 0;
+  }
+
+  .detail-label {
+    color: var(--text-muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    margin-bottom: 5px;
+  }
+
+  .detail-value {
+    color: var(--text-main);
+    font-size: 14px;
+    line-height: 1.6;
+    word-break: break-word;
+    font-weight: 600;
+  }
+
+  .detail-item.full {
+    grid-column: 1 / -1;
+  }
+
+  .action-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+
+  .receipt-strip {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(102, 126, 174, 0.12);
+  }
+
+  .receipt-links {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  .receipt-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: #edf3ff;
+    border: 1px solid rgba(102, 126, 174, 0.16);
+    color: var(--text-main);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .receipt-pill:hover {
+    background: #e3ecff;
+    color: var(--text-main);
+  }
+
+  .vacant-box {
+    background: #f7faff;
+    border: 1px dashed rgba(102, 126, 174, 0.22);
+    border-radius: 18px;
+    padding: 18px;
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  @media (max-width: 767px) {
+    .detail-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="detail-shell">
+  <div class="page-head" style="margin-bottom:0">
+    <div>
+      <h1 class="page-title">Student Detail</h1>
+      <p class="page-subtitle">Seat-wise student information with vacant seats, shift occupancy, contact details, profile information, and quick edit access in one place.</p>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-md-3">
+      <div class="summary-card">
+        <div class="section-title">Total Seats</div>
+        <div class="summary-number">{{ total_seats }}</div>
+        <div class="summary-label">All library seats from 1 to 100.</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="summary-card">
+        <div class="section-title">Occupied Seats</div>
+        <div class="summary-number">{{ occupied_seat_count }}</div>
+        <div class="summary-label">Seats currently assigned to at least one student.</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="summary-card">
+        <div class="section-title">Vacant Seats</div>
+        <div class="summary-number">{{ vacant_seat_count }}</div>
+        <div class="summary-label">Seats with no student assigned yet.</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="summary-card">
+        <div class="section-title">Partially Vacant</div>
+        <div class="summary-number">{{ partial_seat_count }}</div>
+        <div class="summary-label">Seats where one shift is filled and one is still available.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="filter-card">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-6">
+        <label class="vl-label" for="seatSearch">Search by seat number or student name</label>
+        <input id="seatSearch" type="text" class="vl-input" placeholder="Seat 20, Ritu, UPSC..." style="margin-bottom:0">
+      </div>
+      <div class="col-md-6">
+        <div class="section-title" style="margin-bottom:8px">Quick access</div>
+        <div class="d-flex gap-2 flex-wrap">
+          <a href="{% url 'seating_chart' %}" class="btn btn-outline-light">Open Seating Chart</a>
+          <a href="{% url 'add_student' %}" class="btn btn-primary">Add Student</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="seat-grid" id="seatGrid">
+    {% for row in seat_rows %}
+      <div class="seat-card {{ row.status }}" data-seat-card data-search="{{ row.seat_number }} {% for student in row.students %}{{ student.name }} {{ student.preparing_for }} {{ student.contact }} {% endfor %}">
+        <div class="seat-head">
+          <div>
+            <div class="seat-name">Seat {{ row.seat_number }}</div>
+            <div class="seat-meta">
+              {% if row.is_vacant %}
+                No student assigned yet
+              {% elif row.status == 'partially-vacant' %}
+                One student assigned and one shift still available
+              {% elif row.status == 'fully-occupied' %}
+                Morning and Evening both assigned
+              {% else %}
+                Full Day seat assigned
+              {% endif %}
+            </div>
+          </div>
+          <span class="seat-status-badge {{ row.status }}">{{ row.status_label }}</span>
+        </div>
+
+        {% if row.students %}
+          {% for student in row.students %}
+            <div class="student-block">
+              <div class="student-head">
+                <div>
+                  <div class="student-name">{{ student.name }}</div>
+                  <div class="student-subtitle">{{ student.shift }} · {{ student.status }} · Joined {{ student.joining_date }}</div>
+                </div>
+                <span class="badge-shift {% if student.shift == 'Morning' %}morning{% elif student.shift == 'Evening' %}evening{% else %}fullday{% endif %}">
+                  {{ student.shift }}
+                </span>
+              </div>
+
+              <div class="detail-grid">
+                <div class="detail-item">
+                  <div class="detail-label">Contact</div>
+                  <div class="detail-value">{{ student.contact }}</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Email</div>
+                  <div class="detail-value">{{ student.email|default:'—' }}</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Date of Birth</div>
+                  <div class="detail-value">{{ student.date_of_birth|default:'—' }}</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Monthly Fee</div>
+                  <div class="detail-value">₹{{ student.monthly_fee }}</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Due Day</div>
+                  <div class="detail-value">{{ student.monthly_due_day }} every month</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Payment Mode</div>
+                  <div class="detail-value">{{ student.mode_of_payment }}</div>
+                </div>
+                <div class="detail-item full">
+                  <div class="detail-label">Preparing For</div>
+                  <div class="detail-value">{{ student.preparing_for|default:'—' }}</div>
+                </div>
+                <div class="detail-item full">
+                  <div class="detail-label">Academic Details</div>
+                  <div class="detail-value">{{ student.academic_details|default:'—' }}</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Emergency Contact</div>
+                  <div class="detail-value">{{ student.emergency_contact_name|default:'—' }}</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Emergency Phone</div>
+                  <div class="detail-value">{{ student.emergency_contact_phone|default:'—' }}</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Portal Status</div>
+                  <div class="detail-value">{% if student.email_verified %}Verified{% elif student.email %}Pending{% else %}No email{% endif %}</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Seat Status</div>
+                  <div class="detail-value">{{ row.status_label }}</div>
+                </div>
+              </div>
+
+              <div class="receipt-strip">
+                <div class="detail-label">Receipt Export</div>
+                {% if student.recent_receipts %}
+                  <div class="detail-value">
+                    {% if student.latest_receipt %}
+                      Latest paid receipt: {{ student.latest_receipt.month_label }} · ₹{{ student.latest_receipt.amount }}
+                    {% endif %}
+                  </div>
+                  <div class="receipt-links">
+                    {% for receipt in student.recent_receipts %}
+                      <a href="{% url 'payment_receipt_pdf' receipt.pk %}" class="receipt-pill">
+                        {{ receipt.month_label }}
+                      </a>
+                    {% endfor %}
+                  </div>
+                {% else %}
+                  <div class="detail-value">No paid receipt exported yet. Once admin marks a fee paid, the receipt will appear here.</div>
+                {% endif %}
+              </div>
+
+              <div class="action-row">
+                <a href="{% url 'edit_student' student.pk %}" class="btn btn-outline-info btn-sm">Edit</a>
+                <a href="{% url 'delete_student' student.pk %}" class="btn btn-danger btn-sm" onclick="return confirm('Delete {{ student.name }}?')">Delete</a>
+              </div>
+            </div>
+          {% endfor %}
+
+          {% if row.can_add %}
+            <a href="{% url 'add_student' %}?seat={{ row.seat_number }}" class="btn btn-outline-light btn-sm" style="width:max-content">Add Student to Seat {{ row.seat_number }}</a>
+          {% endif %}
+        {% else %}
+          <div class="vacant-box">
+            Vacant seat available for assignment.
+          </div>
+          <a href="{% url 'add_student' %}?seat={{ row.seat_number }}" class="btn btn-primary btn-sm" style="width:max-content">Add Student</a>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+  const seatSearchInput = document.getElementById('seatSearch');
+  const seatCards = Array.from(document.querySelectorAll('[data-seat-card]'));
+
+  seatSearchInput?.addEventListener('input', function () {
+    const query = this.value.trim().toLowerCase();
+    seatCards.forEach((card) => {
+      const haystack = card.getAttribute('data-search').toLowerCase();
+      card.style.display = !query || haystack.includes(query) ? '' : 'none';
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,307 @@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --portal-bg-main: #f7f9ff;
+    --portal-bg-soft: #edf3ff;
+    --portal-bg-spot: rgba(94, 139, 239, 0.14);
+    --portal-surface: rgba(255, 255, 255, 0.92);
+    --portal-surface-strong: #ffffff;
+    --portal-surface-soft: #f2f6ff;
+    --portal-border: rgba(93, 117, 163, 0.16);
+    --portal-shadow: 0 24px 56px rgba(87, 108, 153, 0.14);
+    --portal-shadow-soft: 0 14px 34px rgba(102, 123, 165, 0.08);
+    --portal-text-main: #162745;
+    --portal-text-body: #5b6d8c;
+    --portal-text-soft: #8a98b2;
+    --portal-accent: #316fe6;
+    --portal-accent-deep: #245ac2;
+    --portal-accent-soft: #eaf1ff;
+    --portal-success-bg: #ebfff4;
+    --portal-success-text: #208252;
+    --portal-danger-bg: #fff0f0;
+    --portal-danger-text: #c15b6a;
+  }
+
+  body {
+    color: var(--portal-text-main) !important;
+    font-family: "Plus Jakarta Sans", sans-serif !important;
+    background:
+      radial-gradient(circle at 12% 18%, var(--portal-bg-spot), transparent 18%),
+      radial-gradient(circle at 86% 10%, rgba(208, 223, 255, 0.7), transparent 20%),
+      linear-gradient(180deg, var(--portal-bg-main) 0%, #fbfcff 45%, var(--portal-bg-soft) 100%) !important;
+  }
+
+  body::before {
+    display: none !important;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  .hero-title,
+  .section-title,
+  .metric-value,
+  .detail-value,
+  .hero-title span {
+    font-family: "Sora", sans-serif !important;
+    color: var(--portal-text-main) !important;
+  }
+
+  .hero-title span {
+    color: #3e7aef !important;
+  }
+
+  .hero-subtitle,
+  .hero-copy,
+  .subtitle,
+  .muted,
+  .metric-label,
+  .metric-foot,
+  .section-kicker,
+  .section-subtitle,
+  .detail-box p,
+  .form-note,
+  .summary-chip,
+  .notice-box div,
+  .notice-box p,
+  .mentor-card p,
+  .session-card p,
+  .feedback-box,
+  .portal-note,
+  .portal-error {
+    color: var(--portal-text-body) !important;
+  }
+
+  .shell {
+    position: relative;
+  }
+
+  .eyebrow {
+    background: rgba(236, 242, 255, 0.92) !important;
+    border: 1px solid rgba(93, 117, 163, 0.14) !important;
+    color: #5674b2 !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+  }
+
+  .panel,
+  .card-shell,
+  .portal-card,
+  .detail-box,
+  .mentor-card,
+  .session-card,
+  .feedback-box,
+  .notice-box,
+  .summary-chip,
+  .receipt-table-wrap,
+  .session-table-wrap {
+    background: linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248, 251, 255, 0.94) 100%) !important;
+    border: 1px solid var(--portal-border) !important;
+    box-shadow: var(--portal-shadow) !important;
+    backdrop-filter: blur(18px);
+  }
+
+  .panel::after {
+    background: linear-gradient(140deg, rgba(110, 151, 243, 0.1), transparent 38%) !important;
+  }
+
+  .detail-item,
+  .detail-block {
+    border-bottom-color: rgba(98, 122, 168, 0.12) !important;
+  }
+
+  .detail-label,
+  .label,
+  label {
+    color: #6179a6 !important;
+  }
+
+  .detail-value,
+  .metric-value,
+  .metric-value.soft,
+  .metric-value.bright,
+  .receipt-table td,
+  .session-table td,
+  .session-card h4,
+  .mentor-card h3,
+  .notice-box h5 {
+    color: var(--portal-text-main) !important;
+  }
+
+  .photo-frame,
+  .profile-photo {
+    border-color: rgba(93, 117, 163, 0.16) !important;
+    box-shadow: var(--portal-shadow-soft) !important;
+  }
+
+  .btn-premium,
+  .btn.btn-primary {
+    background: linear-gradient(135deg, var(--portal-accent) 0%, #5f94f3 100%) !important;
+    border: 1px solid rgba(63, 109, 205, 0.18) !important;
+    color: #ffffff !important;
+    box-shadow: 0 16px 30px rgba(68, 104, 182, 0.2) !important;
+  }
+
+  .btn-outline-premium,
+  .btn.btn-outline-light {
+    background: rgba(255,255,255,0.92) !important;
+    border: 1px solid rgba(93, 117, 163, 0.16) !important;
+    color: var(--portal-text-main) !important;
+    box-shadow: none !important;
+  }
+
+  .btn-premium:hover,
+  .btn-outline-premium:hover,
+  .btn.btn-primary:hover,
+  .btn.btn-outline-light:hover {
+    transform: translateY(-2px);
+    color: inherit;
+  }
+
+  .control,
+  .control-file,
+  .portal-input {
+    background: #f7faff !important;
+    border: 1px solid rgba(97, 121, 166, 0.16) !important;
+    color: var(--portal-text-main) !important;
+  }
+
+  .control:focus,
+  .control-file:focus,
+  .portal-input:focus {
+    border-color: #87a8ea !important;
+    box-shadow: 0 0 0 4px rgba(90, 131, 213, 0.12) !important;
+  }
+
+  .message.note,
+  .portal-note {
+    background: #eef4ff !important;
+    border: 1px solid rgba(93, 117, 163, 0.16) !important;
+    color: #486392 !important;
+  }
+
+  .message.error,
+  .portal-error {
+    background: #fff2f2 !important;
+    border: 1px solid rgba(212, 126, 126, 0.2) !important;
+    color: #bb5967 !important;
+  }
+
+  .receipt-table,
+  .session-table {
+    color: var(--portal-text-main) !important;
+  }
+
+  .receipt-table th,
+  .session-table th {
+    background: #f2f6ff !important;
+    color: #5d79ab !important;
+    border-color: rgba(93, 117, 163, 0.12) !important;
+  }
+
+  .receipt-table td,
+  .session-table td {
+    border-color: rgba(93, 117, 163, 0.08) !important;
+  }
+
+  .receipt-table a,
+  .detail-value a {
+    color: var(--portal-accent) !important;
+  }
+
+  .receipt-table a:hover,
+  .detail-value a:hover {
+    color: var(--portal-accent-deep) !important;
+  }
+
+  .month-cell {
+    border-color: rgba(93, 117, 163, 0.12) !important;
+    box-shadow: none !important;
+  }
+
+  .month-paid {
+    background: linear-gradient(180deg, #3b76eb 0%, #5a8ff1 100%) !important;
+    color: #ffffff !important;
+  }
+
+  .month-unpaid {
+    background: linear-gradient(180deg, #fff1f1 0%, #ffe4e4 100%) !important;
+    color: var(--portal-danger-text) !important;
+  }
+
+  .month-future {
+    background: #edf3ff !important;
+    color: #5976ae !important;
+  }
+
+  .month-before {
+    background: #f7f9fe !important;
+    color: #b0bfd7 !important;
+  }
+
+  .status-pill {
+    background: #f1f5ff !important;
+    border-color: rgba(93, 117, 163, 0.14) !important;
+    color: #5a73a4 !important;
+  }
+
+  .status-requested {
+    background: #f3f6ff !important;
+    color: #5573af !important;
+  }
+
+  .status-scheduled {
+    background: #eaf1ff !important;
+    color: #3868cf !important;
+  }
+
+  .status-completed {
+    background: var(--portal-success-bg) !important;
+    color: var(--portal-success-text) !important;
+  }
+
+  .status-cancelled {
+    background: #f3f5f9 !important;
+    color: #8a96aa !important;
+  }
+
+  .tag {
+    background: #eff4ff !important;
+    border-color: rgba(93, 117, 163, 0.12) !important;
+    color: #5b77ab !important;
+  }
+
+  .summary-chip,
+  .notice-box,
+  .feedback-box {
+    color: var(--portal-text-body) !important;
+  }
+
+  .portal-card h2,
+  .card-shell h1,
+  .form-card h3 {
+    color: var(--portal-text-main) !important;
+  }
+
+  .portal-card a,
+  .card-shell a,
+  .panel a {
+    transition: color 0.18s ease;
+  }
+
+  .portal-card a:hover,
+  .card-shell a:hover,
+  .panel a:hover {
+    color: var(--portal-accent-deep) !important;
+  }
+
+  @media (max-width: 767px) {
+    .panel,
+    .card-shell,
+    .portal-card {
+      border-radius: 24px !important;
+    }
+  }
+</style>

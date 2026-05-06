@@ -1,66 +1,152 @@
 {% extends 'students/base.html' %}
-{% block title %}Add Student — Valmiki Library{% endblock %}
+{% block title %}{% if page_mode == 'edit' %}Edit Student{% else %}Add Student{% endif %} — Valmiki Library{% endblock %}
 
 {% block content %}
-<div style="max-width:520px;margin:0 auto">
-  <h3 style="font-weight:700;margin-bottom:28px">➕ Add New Student</h3>
+<div style="max-width:920px;margin:0 auto">
+  <h3 style="font-weight:700;margin-bottom:28px">{{ form_title }}</h3>
 
   {% if error %}
-  <div style="background:#4d1a1a;color:#f87171;border-radius:8px;padding:12px 16px;
+  <div style="background:#4d1a1a;color:#f87171;border-radius:10px;padding:12px 16px;
               margin-bottom:20px;border:1px solid #7f1d1d;font-size:14px">
     {{ error }}
   </div>
   {% endif %}
 
-  <div style="background:var(--bg-card);border-radius:14px;border:1px solid var(--border);padding:28px">
-    <form method="POST">
+  <div style="background:var(--bg-card);border-radius:16px;border:1px solid var(--border);padding:28px">
+    <form method="POST" enctype="multipart/form-data">
       {% csrf_token %}
 
-      <label class="vl-label">Full Name</label>
-      <input type="text" name="name" class="vl-input" placeholder="Enter full name" required>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="vl-label">Full Name</label>
+          <input type="text" name="name" class="vl-input" placeholder="Enter full name" value="{{ student_obj.name|default:'' }}" required>
+        </div>
+        <div class="col-md-6">
+          <label class="vl-label">Contact Number</label>
+          <input type="text" name="contact" class="vl-input" placeholder="Enter phone number" value="{{ student_obj.contact|default:'' }}" required>
+        </div>
 
-      <label class="vl-label">Contact Number</label>
-      <input type="text" name="contact" class="vl-input" placeholder="Enter phone number" required>
+        <div class="col-md-6">
+          <label class="vl-label">Email Address</label>
+          <input type="email" name="email" class="vl-input" placeholder="student@example.com" value="{{ student_obj.email|default:'' }}">
+          <div style="margin-top:-14px;margin-bottom:16px;font-size:11px;color:var(--text-muted)">
+            Used for verification and student portal login.
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="vl-label">Date of Birth</label>
+          <input type="date" name="date_of_birth" class="vl-input" value="{{ student_obj.date_of_birth|date:'Y-m-d' }}">
+        </div>
 
-      <label class="vl-label">Seat Number (1–100)</label> 
-      <input type="number"
-       name="seat_number"
-       class="vl-input"
-       min="1"
-       max="100"
-       placeholder="1–100"
-       value="{{ seat }}"
-       required>
+        <div class="col-md-4">
+          <label class="vl-label">Seat Number (1–100)</label>
+          <input type="number" name="seat_number" class="vl-input" min="1" max="100" placeholder="1–100" value="{% if student_obj %}{{ student_obj.seat_number }}{% else %}{{ seat }}{% endif %}" required>
+          <div style="margin-top:-14px;margin-bottom:16px;font-size:11px;color:var(--text-muted)">
+            Only seats 1–100 are valid.
+          </div>
+        </div>
+        <div class="col-md-4">
+          <label class="vl-label">Shift</label>
+          <select name="shift" class="vl-input">
+            <option value="Morning" {% if student_obj.shift == 'Morning' %}selected{% endif %}>Morning</option>
+            <option value="Evening" {% if student_obj.shift == 'Evening' %}selected{% endif %}>Evening</option>
+            <option value="Full Day" {% if student_obj.shift == 'Full Day' %}selected{% endif %}>Full Day</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="vl-label">Status</label>
+          <select name="status" class="vl-input">
+            {% for choice_value, choice_label in status_choices %}
+              <option value="{{ choice_value }}" {% if student_obj.status == choice_value or not student_obj and choice_value == 'Active' %}selected{% endif %}>{{ choice_label }}</option>
+            {% endfor %}
+          </select>
+        </div>
 
-<div style="font-size:11px;color:var(--text-muted);margin-top:-16px;margin-bottom:16px">
-  ⚠️ Only seats 1–100 are valid.
-</div>
-      <label class="vl-label">Shift</label>
-      <select name="shift" class="vl-input">
-        <option>Morning</option>
-        <option>Evening</option>
-        <option>Full Day</option>
-      </select>
+        <div class="col-md-4">
+          <label class="vl-label">Joining Date</label>
+          <input type="date" name="joining_date" class="vl-input" value="{{ student_obj.joining_date|date:'Y-m-d' }}" required>
+        </div>
+        <div class="col-md-4">
+          <label class="vl-label">Monthly Fee (₹)</label>
+          <input type="number" step="0.01" name="monthly_fee" class="vl-input" value="{{ student_obj.monthly_fee|default:'500' }}" required>
+        </div>
+        <div class="col-md-4">
+          <label class="vl-label">Monthly Due Day</label>
+          <input type="number" min="1" max="28" name="monthly_due_day" class="vl-input" value="{{ student_obj.monthly_due_day|default:'5' }}" required>
+        </div>
 
-      <label class="vl-label">Joining Date</label>
-      <input type="date" name="joining_date" class="vl-input" required>
+        <div class="col-md-6">
+          <label class="vl-label">Mode of Payment</label>
+          <select name="mode_of_payment" class="vl-input">
+            <option value="Cash" {% if student_obj.mode_of_payment == 'Cash' or not student_obj %}selected{% endif %}>💵 Cash</option>
+            <option value="UPI" {% if student_obj.mode_of_payment == 'UPI' %}selected{% endif %}>📲 UPI</option>
+            <option value="Online" {% if student_obj.mode_of_payment == 'Online' %}selected{% endif %}>📱 Online</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="vl-label">Preparing For</label>
+          <input type="text" name="preparing_for" class="vl-input" placeholder="UPSC, SSC, Banking, Boards..." value="{{ student_obj.preparing_for|default:'' }}">
+        </div>
 
-      <label class="vl-label">Monthly Fee (₹)</label>
-      <input type="number" name="monthly_fee" class="vl-input" value="500" required>
+        <div class="col-md-12">
+          <label class="vl-label">Academic Details</label>
+          <textarea name="academic_details" class="vl-input" rows="4" placeholder="Course, college, stream, class, year...">{{ student_obj.academic_details|default:'' }}</textarea>
+        </div>
 
-      <label class="vl-label">Mode of Payment</label>
-      <select name="mode_of_payment" class="vl-input">
-        <option value="Cash">💵 Cash</option>
-        <option value="Online">📱 Online</option>
-      </select>
+        <div class="col-md-6">
+          <label class="vl-label">Emergency Contact Name</label>
+          <input type="text" name="emergency_contact_name" class="vl-input" value="{{ student_obj.emergency_contact_name|default:'' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="vl-label">Emergency Contact Phone</label>
+          <input type="text" name="emergency_contact_phone" class="vl-input" value="{{ student_obj.emergency_contact_phone|default:'' }}">
+        </div>
+
+        <div class="col-md-6">
+          <label class="vl-label">Student Photo</label>
+          <input type="file" name="profile_photo" class="vl-input" style="padding:10px 14px">
+          {% if student_obj and student_obj.profile_photo %}
+            <div style="font-size:12px;color:var(--text-muted);margin-top:-14px;margin-bottom:16px">
+              Current file:
+              <a href="{{ student_obj.profile_photo.url }}" target="_blank" rel="noopener" style="color:#93c5fd">{{ student_obj.profile_photo.name }}</a>
+            </div>
+          {% endif %}
+        </div>
+        <div class="col-md-6">
+          <label class="vl-label">Aadhar / ID Copy</label>
+          <input type="file" name="id_copy" class="vl-input" style="padding:10px 14px">
+          {% if student_obj and student_obj.id_copy %}
+            <div style="font-size:12px;color:var(--text-muted);margin-top:-14px;margin-bottom:16px">
+              Current file:
+              <a href="{{ student_obj.id_copy.url }}" target="_blank" rel="noopener" style="color:#93c5fd">{{ student_obj.id_copy.name }}</a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if student_obj %}
+      <div style="background:var(--bg-deep);border:1px solid var(--border);border-radius:12px;padding:16px;margin:8px 0 24px">
+        <div style="font-size:13px;color:var(--text-muted)">Student portal</div>
+        <div style="margin-top:4px">
+          {% if student_obj.email_verified %}
+            <span style="color:#4ade80;font-weight:600">Email verified</span>
+          {% else %}
+            <span style="color:#fbbf24;font-weight:600">Email not verified yet</span>
+          {% endif %}
+          {% if student_obj.email %}
+            <span style="color:var(--text-muted)"> · login email: {{ student_obj.email }}</span>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
 
       <button type="submit"
-        style="width:100%;background:#4f46e5;color:white;border:none;border-radius:8px;
+        style="width:100%;background:#4f46e5;color:white;border:none;border-radius:10px;
                padding:13px;font-size:16px;font-weight:600;cursor:pointer;margin-top:4px">
-        Save Student →
+        {{ submit_label }}
       </button>
       <a href="{% url 'student_list' %}"
-         style="display:block;text-align:center;margin-top:14px;color:var(--text-muted);font-size:14px">
+         style="display:block;text-align:center;margin-top:14px;color:var(--text-muted);font-size:14px;text-decoration:none">
         Cancel
       </a>
     </form>

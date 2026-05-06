@@ -1,0 +1,104 @@
+{% extends 'students/base.html' %}
+{% block title %}Monthly Reminders — Valmiki Library{% endblock %}
+
+{% block content %}
+<style>
+  .reminder-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 4px solid #f59e0b;
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .message-box {
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 13px;
+    color: var(--text-muted);
+    white-space: pre-wrap;
+  }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h3 style="font-weight:700;margin-bottom:4px">🔔 Monthly Reminders</h3>
+    <div style="color:var(--text-muted);font-size:14px">Send dues reminders for {{ current_month }}. Ready-made WhatsApp messages are included.</div>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{% url 'defaulters' %}" class="btn btn-outline-warning">⚠️ View Dues</a>
+    <a href="{% url 'payment_ledger' %}" class="btn btn-outline-light">📒 Open Ledger</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-icon">👥</div>
+      <div class="stat-value">{{ reminder_rows|length }}</div>
+      <div class="stat-label">Students needing reminders</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-icon">💸</div>
+      <div class="stat-value" style="color:#f87171">₹{{ total_due }}</div>
+      <div class="stat-label">Total due in reminders</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-icon">📲</div>
+      <div class="stat-value">WhatsApp</div>
+      <div class="stat-label">One-click reminder sending</div>
+    </div>
+  </div>
+</div>
+
+{% if not reminder_rows %}
+  <div class="text-center" style="padding:60px 20px;background:var(--bg-card);border:1px solid var(--border);border-radius:16px">
+    <div style="font-size:56px;margin-bottom:10px">🎉</div>
+    <h4 style="color:#4ade80">No reminders pending for {{ current_month }}</h4>
+    <p style="color:var(--text-muted)">Everyone due for this month is already marked paid.</p>
+  </div>
+{% else %}
+  {% for row in reminder_rows %}
+    <div class="reminder-card">
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+        <div>
+          <div style="font-size:18px;font-weight:700">{{ row.student.name }}</div>
+          <div style="font-size:13px;color:var(--text-muted)">
+            📞 {{ row.student.contact }} · 🪑 Seat {{ row.student.seat_number }} · {{ row.student.shift }}
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:20px;font-weight:700;color:#f87171">₹{{ row.due_amount }}</div>
+          <div style="font-size:12px;color:#fbbf24">{{ row.overdue_months }} overdue month{{ row.overdue_months|pluralize }}</div>
+        </div>
+      </div>
+
+      <div class="message-box" id="msg-{{ forloop.counter }}">{{ row.message }}</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:10px">
+        Overdue months: {{ row.overdue_labels|join:', ' }}
+      </div>
+
+      <div class="d-flex gap-2 flex-wrap mt-3">
+        {% if row.whatsapp_url %}
+          <a href="{{ row.whatsapp_url }}" target="_blank" rel="noopener" class="btn btn-success btn-sm">Send on WhatsApp</a>
+        {% endif %}
+        <button type="button" class="btn btn-outline-light btn-sm" onclick="copyReminder('msg-{{ forloop.counter }}')">Copy Message</button>
+        <a href="{% url 'payment_ledger' %}" class="btn btn-outline-info btn-sm">Open Ledger</a>
+      </div>
+    </div>
+  {% endfor %}
+{% endif %}
+
+<script>
+  async function copyReminder(id) {
+    const text = document.getElementById(id).innerText;
+    await navigator.clipboard.writeText(text);
+  }
+</script>
+{% endblock %}

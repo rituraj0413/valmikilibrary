@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Student Dashboard — Valmiki Library</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --green-950: #08170f;
+      --green-900: #0f2418;
+      --green-850: #163123;
+      --green-800: #1b3d2b;
+      --green-700: #235539;
+      --green-600: #2f734d;
+      --green-500: #49a06a;
+      --green-400: #74c08d;
+      --green-300: #a7d6b6;
+      --green-200: #d6eadb;
+      --green-100: #eef7f0;
+      --white-soft: #f8fcf8;
+      --border-soft: rgba(167, 214, 182, 0.16);
+      --text-soft: rgba(248, 252, 248, 0.72);
+      --shadow-premium: 0 28px 80px rgba(4, 17, 10, 0.28);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--white-soft);
+      font-family: "Manrope", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(116, 192, 141, 0.18), transparent 30%),
+        radial-gradient(circle at top right, rgba(214, 234, 219, 0.12), transparent 22%),
+        linear-gradient(135deg, #07130c 0%, #10261a 34%, #163123 70%, #214633 100%);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 72px 72px;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,0.55), transparent 85%);
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 34px 22px 56px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero {
+      padding: 22px 0 10px;
+      margin-bottom: 12px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border: 1px solid rgba(214, 234, 219, 0.18);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--green-200);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      backdrop-filter: blur(12px);
+    }
+
+    .hero-title {
+      margin: 16px 0 8px;
+      font-size: clamp(2.5rem, 6vw, 4.2rem);
+      font-weight: 800;
+      letter-spacing: -0.05em;
+      line-height: 0.96;
+    }
+
+    .hero-title span {
+      color: var(--green-300);
+    }
+
+    .hero-subtitle {
+      max-width: 620px;
+      margin: 0;
+      color: var(--text-soft);
+      font-size: 15px;
+      line-height: 1.75;
+    }
+
+    .action-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn-premium,
+    .btn-outline-premium {
+      border-radius: 16px;
+      padding: 14px 22px;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 160px;
+      box-shadow: none;
+    }
+
+    .btn-premium {
+      background: linear-gradient(135deg, var(--green-300) 0%, #ffffff 130%);
+      color: var(--green-900);
+      border: 1px solid rgba(255,255,255,0.28);
+      box-shadow: 0 16px 38px rgba(177, 219, 190, 0.2);
+    }
+
+    .btn-outline-premium {
+      background: rgba(255,255,255,0.04);
+      color: var(--white-soft);
+      border: 1px solid rgba(255,255,255,0.22);
+      backdrop-filter: blur(10px);
+    }
+
+    .btn-premium:hover,
+    .btn-outline-premium:hover {
+      transform: translateY(-2px);
+      color: inherit;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(19, 46, 31, 0.94) 0%, rgba(14, 34, 22, 0.98) 100%);
+      border: 1px solid var(--border-soft);
+      border-radius: 28px;
+      padding: 24px;
+      height: 100%;
+      box-shadow: var(--shadow-premium);
+      backdrop-filter: blur(18px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(145deg, rgba(255,255,255,0.06), transparent 36%);
+    }
+
+    .metric-card {
+      min-height: 180px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .metric-label,
+    .muted,
+    .section-kicker {
+      color: var(--text-soft);
+      font-size: 13px;
+    }
+
+    .metric-value {
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      margin: 6px 0 2px;
+    }
+
+    .metric-value.soft {
+      color: var(--green-200);
+    }
+
+    .metric-value.bright {
+      color: #ffffff;
+    }
+
+    .metric-foot {
+      color: var(--green-300);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .section-subtitle {
+      margin-top: 4px;
+      color: var(--text-soft);
+      font-size: 14px;
+    }
+
+    .photo-frame {
+      width: 84px;
+      height: 84px;
+      border-radius: 22px;
+      object-fit: cover;
+      border: 2px solid rgba(214, 234, 219, 0.22);
+      box-shadow: 0 18px 38px rgba(4, 17, 10, 0.28);
+    }
+
+    .detail-grid {
+      margin-top: 10px;
+    }
+
+    .detail-item {
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(214, 234, 219, 0.09);
+    }
+
+    .detail-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .detail-label {
+      color: var(--green-300);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .detail-value {
+      color: var(--white-soft);
+      font-size: 1rem;
+      font-weight: 600;
+      line-height: 1.65;
+      word-break: break-word;
+    }
+
+    .payment-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .month-cell {
+      border-radius: 18px;
+      padding: 16px 0;
+      text-align: center;
+      font-size: 20px;
+      font-weight: 800;
+      border: 1px solid rgba(214, 234, 219, 0.08);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+    }
+
+    .month-paid {
+      background: linear-gradient(180deg, rgba(73, 160, 106, 0.34), rgba(36, 93, 58, 0.75));
+      color: #ffffff;
+    }
+
+    .month-unpaid {
+      background: linear-gradient(180deg, rgba(55, 93, 67, 0.62), rgba(27, 53, 37, 0.92));
+      color: var(--green-100);
+    }
+
+    .month-future {
+      background: rgba(255,255,255,0.06);
+      color: var(--green-200);
+    }
+
+    .month-before {
+      background: rgba(255,255,255,0.025);
+      color: rgba(238, 247, 240, 0.28);
+    }
+
+    .summary-chip {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+      padding: 12px 16px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.04);
+      color: var(--green-200);
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.6;
+    }
+
+    .notice-box {
+      margin-top: 18px;
+      padding: 18px;
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(36, 83, 55, 0.9), rgba(20, 46, 30, 0.96));
+      border: 1px solid rgba(167, 214, 182, 0.16);
+    }
+
+    .notice-box h5 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .notice-box p,
+    .notice-box div {
+      margin: 0;
+      color: var(--green-200);
+      font-size: 14px;
+    }
+
+    .receipt-table-wrap {
+      overflow-x: auto;
+      border-radius: 20px;
+      border: 1px solid rgba(214, 234, 219, 0.08);
+      background: rgba(255,255,255,0.03);
+    }
+
+    .receipt-table {
+      margin: 0;
+      color: var(--white-soft);
+    }
+
+    .receipt-table th,
+    .receipt-table td {
+      padding: 14px 16px;
+      font-size: 13px;
+      border-color: rgba(214, 234, 219, 0.08);
+      vertical-align: middle;
+    }
+
+    .receipt-table th {
+      background: rgba(255,255,255,0.05);
+      color: var(--green-200);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+    }
+
+    .receipt-table td {
+      color: #ffffff;
+      background: transparent;
+    }
+
+    .receipt-table a,
+    .detail-value a {
+      color: var(--green-200);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .receipt-table a:hover,
+    .detail-value a:hover {
+      color: #ffffff;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      border: 1px solid rgba(214, 234, 219, 0.14);
+      background: rgba(255,255,255,0.05);
+      color: var(--green-200);
+    }
+
+    .status-pill.status-requested {
+      background: rgba(255,255,255,0.06);
+      color: var(--green-100);
+    }
+
+    .status-pill.status-scheduled {
+      background: rgba(73, 160, 106, 0.18);
+      color: #ffffff;
+    }
+
+    .status-pill.status-completed {
+      background: rgba(167, 214, 182, 0.2);
+      color: var(--green-100);
+    }
+
+    .status-pill.status-cancelled {
+      background: rgba(36, 58, 43, 0.7);
+      color: var(--green-300);
+    }
+
+    .mentor-list {
+      display: grid;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .mentor-item {
+      border-radius: 20px;
+      padding: 18px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(214, 234, 219, 0.08);
+    }
+
+    .mentor-item h4 {
+      margin: 0 0 6px;
+      font-size: 1.05rem;
+      font-weight: 800;
+    }
+
+    .mentor-item p {
+      margin: 0;
+      color: var(--text-soft);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    @media (max-width: 991px) {
+      .hero-title {
+        font-size: 2.75rem;
+      }
+
+      .panel {
+        border-radius: 24px;
+      }
+    }
+
+    @media (max-width: 767px) {
+      .shell {
+        padding: 22px 16px 42px;
+      }
+
+      .hero {
+        padding-top: 6px;
+      }
+
+      .hero-title {
+        font-size: 2.2rem;
+      }
+
+      .payment-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .action-group {
+        width: 100%;
+      }
+
+      .btn-premium,
+      .btn-outline-premium {
+        flex: 1 1 100%;
+      }
+    }
+  </style>
+  {% include 'students/includes/portal_reference_theme.html' %}
+</head>
+<body>
+  <div class="shell">
+    <div class="hero">
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+        <div>
+          <div class="eyebrow">Valmiki Library Student Portal</div>
+          <h1 class="hero-title">Welcome, <span>{{ student.name }}</span></h1>
+          <p class="hero-subtitle">
+            Your complete library profile, dues summary, mentorship progress, seat information, and payment receipts are all organized here in one premium student space.
+          </p>
+        </div>
+        <div class="action-group">
+          {% if current_payment %}
+            <a href="{% url 'payment_receipt_pdf' current_payment.pk %}" class="btn-premium">Current Receipt</a>
+          {% else %}
+            <span class="btn-premium" style="pointer-events:none;opacity:.45">Current Receipt</span>
+          {% endif %}
+          <a href="{% url 'student_portal_mentorship' %}" class="btn-outline-premium">Mentorship</a>
+          <a href="{% url 'student_portal_logout' %}" class="btn-outline-premium">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+      <div class="col-md-4">
+        <div class="panel metric-card">
+          <div>
+            <div class="metric-label">Current Month</div>
+            <div class="metric-value soft">
+              {% if current_status == 'paid' %}Paid{% elif current_status == 'unpaid' %}Due{% elif current_status == 'future' %}Upcoming{% else %}Not Started{% endif %}
+            </div>
+          </div>
+          <div class="metric-foot">{{ current_month }}</div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="panel metric-card">
+          <div>
+            <div class="metric-label">Total Due</div>
+            <div class="metric-value bright">₹{{ overdue.due_amount }}</div>
+          </div>
+          <div class="metric-foot">{{ overdue.unpaid_count }} overdue month{{ overdue.unpaid_count|pluralize }}</div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="panel metric-card">
+          <div>
+            <div class="metric-label">Seat & Shift</div>
+            <div class="metric-value bright">Seat {{ student.seat_number }}</div>
+          </div>
+          <div class="metric-foot">{{ student.shift }} · {{ student.status }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+      <div class="col-lg-7">
+        <div class="panel">
+          <div class="d-flex justify-content-between align-items-center mb-3 gap-3 flex-wrap">
+            <div>
+              <div class="section-kicker">Student Details</div>
+              <h3 class="section-title">Profile</h3>
+              <div class="section-subtitle">Your registered academic and library details</div>
+            </div>
+            {% if student.profile_photo %}
+              <img src="{{ student.profile_photo.url }}" alt="Student photo" class="photo-frame">
+            {% endif %}
+          </div>
+
+          <div class="row detail-grid g-3">
+            <div class="col-md-6">
+              <div class="detail-item">
+                <div class="detail-label">Phone</div>
+                <div class="detail-value">{{ student.contact }}</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <div class="detail-label">Email</div>
+                <div class="detail-value">{{ student.email|default:'—' }}</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <div class="detail-label">Date of Birth</div>
+                <div class="detail-value">{{ student.date_of_birth|default:'—' }}</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <div class="detail-label">Joining Date</div>
+                <div class="detail-value">{{ student.joining_date }}</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <div class="detail-label">Preparing For</div>
+                <div class="detail-value">{{ student.preparing_for|default:'—' }}</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <div class="detail-label">Monthly Fee / Due Day</div>
+                <div class="detail-value">₹{{ student.monthly_fee }} / {{ student.monthly_due_day }} every month</div>
+              </div>
+            </div>
+            <div class="col-md-12">
+              <div class="detail-item">
+                <div class="detail-label">Academic Details</div>
+                <div class="detail-value">{{ student.academic_details|default:'—'|linebreaksbr }}</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <div class="detail-label">Emergency Contact</div>
+                <div class="detail-value">{{ student.emergency_contact_name|default:'—' }}</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <div class="detail-label">Emergency Phone</div>
+                <div class="detail-value">{{ student.emergency_contact_phone|default:'—' }}</div>
+              </div>
+            </div>
+            <div class="col-md-12">
+              <div class="detail-item">
+                <div class="detail-label">ID Copy</div>
+                <div class="detail-value">
+                  {% if student.id_copy %}
+                    <a href="{{ student.id_copy.url }}" target="_blank" rel="noopener">View Uploaded ID</a>
+                  {% else %}
+                    —
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-5">
+        <div class="panel">
+          <div class="section-kicker">Finance</div>
+          <h3 class="section-title">Payment Overview</h3>
+          <div class="section-subtitle">This year</div>
+
+          <div class="payment-grid">
+            {% for status in ledger_row.months %}
+              <div class="month-cell {% if status == 'paid' %}month-paid{% elif status == 'unpaid' %}month-unpaid{% elif status == 'future' %}month-future{% else %}month-before{% endif %}">
+                {% if status == 'paid' %}✓{% elif status == 'unpaid' %}✦{% elif status == 'future' %}•{% else %}—{% endif %}
+              </div>
+            {% endfor %}
+          </div>
+
+          <div class="summary-chip">
+            <span>Paid months: {{ ledger_row.paid_count }}</span>
+            <span>Ahead: {{ ledger_row.advance_count }}</span>
+            <span>Overdue: {{ ledger_row.unpaid_count }}</span>
+          </div>
+
+          {% if overdue.months %}
+            <div class="notice-box">
+              <h5>Overdue Months</h5>
+              <div>{{ overdue.months|join:', ' }}</div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+      <div class="col-lg-5">
+        <div class="panel">
+          <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
+            <div>
+              <div class="section-kicker">Mentorship</div>
+              <h3 class="section-title">Practice Progress</h3>
+              <div class="section-subtitle">Track revision sessions, mentor marks, and upcoming practice calls</div>
+            </div>
+            <a href="{% url 'student_portal_mentorship' %}" class="btn-premium">Book Session</a>
+          </div>
+
+          <div class="row g-3 mt-1">
+            <div class="col-6">
+              <div class="detail-item">
+                <div class="detail-label">Total Sessions</div>
+                <div class="detail-value">{{ mentorship_progress.total_sessions }}</div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="detail-item">
+                <div class="detail-label">Completed</div>
+                <div class="detail-value">{{ mentorship_progress.completed_sessions }}</div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="detail-item">
+                <div class="detail-label">Requested</div>
+                <div class="detail-value">{{ mentorship_progress.requested_sessions }}</div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="detail-item">
+                <div class="detail-label">Scheduled</div>
+                <div class="detail-value">{{ mentorship_progress.scheduled_sessions }}</div>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="detail-item">
+                <div class="detail-label">Average Marks</div>
+                <div class="detail-value">
+                  {% if mentorship_progress.average_marks is not None %}
+                    {{ mentorship_progress.average_marks|floatformat:1 }}
+                  {% else %}
+                    Marks will appear after completed mentor evaluations.
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-7">
+        <div class="panel">
+          <div class="section-kicker">Recent Sessions</div>
+          <h3 class="section-title">Mentor Updates</h3>
+          <div class="section-subtitle">Your latest booked sessions and mentor responses</div>
+
+          <div class="mentor-list">
+            {% for session in recent_mentorship_sessions %}
+              <div class="mentor-item">
+                <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                  <div>
+                    <h4>{{ session.topic }}</h4>
+                    <p>{{ session.mentor.name }} · {{ session.plan_type }} mentorship{% if session.preferred_date %} · {{ session.preferred_date }}{% endif %}</p>
+                  </div>
+                  <span class="status-pill status-{{ session.status|lower }}">{{ session.status }}</span>
+                </div>
+                <p style="margin-top:10px">
+                  {% if session.mentor_feedback %}
+                    {{ session.mentor_feedback|truncatechars:180 }}
+                  {% elif session.student_study_notes %}
+                    {{ session.student_study_notes|truncatechars:180 }}
+                  {% else %}
+                    Mentor feedback and practice notes will appear here once the session progresses.
+                  {% endif %}
+                </p>
+              </div>
+            {% empty %}
+              <div class="mentor-item">
+                <h4>No mentorship sessions yet</h4>
+                <p>Book your first online revision session and let a mentor quiz you on what you are preparing for.</p>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
+        <div>
+          <div class="section-kicker">Documents</div>
+          <h3 class="section-title">Receipts</h3>
+          <div class="section-subtitle">Your recent paid months and downloadable receipts</div>
+        </div>
+      </div>
+
+      <div class="receipt-table-wrap">
+        <table class="table receipt-table table-borderless">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>Method</th>
+              <th>Amount</th>
+              <th>Paid On</th>
+              <th>Receipt</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for payment in receipts %}
+              <tr>
+                <td>{{ payment.month_label }}</td>
+                <td>{{ payment.payment_method }}</td>
+                <td>₹{{ payment.amount }}</td>
+                <td>{{ payment.paid_on }}</td>
+                <td><a href="{% url 'payment_receipt_pdf' payment.pk %}">Download</a></td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" class="muted">No receipts available yet.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

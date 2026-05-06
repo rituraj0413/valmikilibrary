@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mentorship — Valmiki Library</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --green-950: #08170f;
+      --green-900: #10251a;
+      --green-800: #173626;
+      --green-700: #245239;
+      --green-500: #4da36f;
+      --green-300: #b8dec3;
+      --green-200: #dceddf;
+      --white-soft: #f8fcf8;
+      --text-soft: rgba(248, 252, 248, 0.72);
+      --border-soft: rgba(184, 222, 195, 0.14);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--white-soft);
+      font-family: "Manrope", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(184, 222, 195, 0.14), transparent 28%),
+        linear-gradient(145deg, #07120b 0%, #10281b 45%, #173626 100%);
+    }
+
+    .shell {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 34px 22px 56px;
+    }
+
+    .panel {
+      border-radius: 28px;
+      padding: 24px;
+      border: 1px solid var(--border-soft);
+      background: linear-gradient(180deg, rgba(18, 43, 29, 0.95), rgba(12, 30, 20, 0.98));
+      box-shadow: 0 28px 80px rgba(2, 10, 6, 0.32);
+      backdrop-filter: blur(18px);
+      height: 100%;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--green-200);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    h1 {
+      margin: 16px 0 8px;
+      font-size: clamp(2.4rem, 5vw, 4rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+    }
+
+    .hero-copy,
+    .muted {
+      color: var(--text-soft);
+      line-height: 1.75;
+      font-size: 14px;
+    }
+
+    .btn-premium,
+    .btn-outline-premium {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 16px;
+      padding: 14px 20px;
+      font-size: 14px;
+      font-weight: 800;
+      text-decoration: none;
+      border: 1px solid transparent;
+      transition: transform 0.18s ease;
+    }
+
+    .btn-premium {
+      background: linear-gradient(135deg, var(--green-300) 0%, #ffffff 125%);
+      color: var(--green-900);
+    }
+
+    .btn-outline-premium {
+      background: rgba(255,255,255,0.04);
+      color: #ffffff;
+      border-color: rgba(255,255,255,0.14);
+    }
+
+    .btn-premium:hover,
+    .btn-outline-premium:hover {
+      transform: translateY(-2px);
+      color: inherit;
+    }
+
+    .metric-label {
+      color: var(--text-soft);
+      font-size: 13px;
+    }
+
+    .metric-value {
+      margin-top: 8px;
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+    }
+
+    .metric-foot {
+      margin-top: 8px;
+      color: var(--green-300);
+      font-size: 13px;
+    }
+
+    .mentor-card {
+      border-radius: 22px;
+      padding: 20px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      height: 100%;
+    }
+
+    .mentor-card h3 {
+      margin: 0 0 8px;
+      font-size: 1.15rem;
+      font-weight: 800;
+    }
+
+    .mentor-card p {
+      margin: 0 0 12px;
+      color: var(--text-soft);
+      font-size: 14px;
+      line-height: 1.75;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      margin: 0 8px 8px 0;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--green-200);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--green-200);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .control {
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.05);
+      color: #ffffff;
+      padding: 14px 16px;
+      margin-bottom: 18px;
+      outline: none;
+    }
+
+    textarea.control {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .control:focus {
+      border-color: rgba(184, 222, 195, 0.28);
+      box-shadow: 0 0 0 3px rgba(184, 222, 195, 0.08);
+    }
+
+    .message {
+      border-radius: 18px;
+      padding: 14px 16px;
+      margin-bottom: 18px;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .message.error {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: #ffffff;
+    }
+
+    .message.note {
+      background: rgba(184, 222, 195, 0.1);
+      border: 1px solid rgba(184, 222, 195, 0.16);
+      color: var(--green-200);
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+      color: #ffffff;
+    }
+
+    .session-list {
+      display: grid;
+      gap: 16px;
+    }
+
+    .session-card {
+      border-radius: 22px;
+      padding: 20px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .session-card h4 {
+      margin: 0 0 6px;
+      font-size: 1.05rem;
+      font-weight: 800;
+    }
+
+    .session-card p {
+      margin: 0 0 10px;
+      color: var(--text-soft);
+      line-height: 1.75;
+      font-size: 14px;
+    }
+
+    .feedback-box {
+      margin-top: 12px;
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    @media (max-width: 767px) {
+      .shell {
+        padding: 22px 14px 40px;
+      }
+
+      .panel {
+        border-radius: 24px;
+      }
+    }
+  </style>
+  {% include 'students/includes/portal_reference_theme.html' %}
+</head>
+<body>
+  <div class="shell">
+    <div class="panel mb-4">
+      <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+        <div>
+          <div class="eyebrow">Student Mentorship</div>
+          <h1>Practice with a mentor</h1>
+          <p class="hero-copy">Choose a verified mentor, share what you are studying, and use live online sessions to revise through questions, feedback, and marks.</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <a href="{% url 'student_portal_dashboard' %}" class="btn-outline-premium">Back to Dashboard</a>
+          <a href="{% url 'student_portal_logout' %}" class="btn-outline-premium">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="message note">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+    {% if error %}
+      <div class="message error">{{ error }}</div>
+    {% endif %}
+
+    <div class="row g-4 mb-4">
+      <div class="col-md-3">
+        <div class="panel">
+          <div class="metric-label">Total Sessions</div>
+          <div class="metric-value">{{ progress.total_sessions }}</div>
+          <div class="metric-foot">All mentorship requests</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="panel">
+          <div class="metric-label">Completed</div>
+          <div class="metric-value">{{ progress.completed_sessions }}</div>
+          <div class="metric-foot">Sessions with mentor review</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="panel">
+          <div class="metric-label">Scheduled</div>
+          <div class="metric-value">{{ progress.scheduled_sessions }}</div>
+          <div class="metric-foot">Ready for online meeting</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="panel">
+          <div class="metric-label">Average Marks</div>
+          <div class="metric-value">
+            {% if progress.average_marks is not None %}
+              {{ progress.average_marks|floatformat:1 }}
+            {% else %}
+              —
+            {% endif %}
+          </div>
+          <div class="metric-foot">Based on completed evaluations</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+      <div class="col-lg-7">
+        <div class="panel">
+          <div class="metric-label">Verified Mentors</div>
+          <h3 style="margin:4px 0 8px;font-size:1.4rem;font-weight:800">Choose your revision partner</h3>
+          <p class="hero-copy">Mentors can ask questions on your topic, test how much you remember, and give marks and feedback after the session.</p>
+
+          <div class="row g-3 mt-1">
+            {% for mentor in mentors %}
+              <div class="col-md-6">
+                <div class="mentor-card">
+                  <h3>{{ mentor.name }}</h3>
+                  <p>{{ mentor.job_role }}{% if mentor.current_work %} · {{ mentor.current_work }}{% endif %}</p>
+                  <div class="tag">{{ mentor.experience_years }} year{{ mentor.experience_years|pluralize }} experience</div>
+                  <div class="tag">Daily ₹{{ mentor.daily_session_price }}</div>
+                  <div class="tag">Monthly ₹{{ mentor.monthly_session_price }}</div>
+                  <div class="tag">{{ mentor.primary_session_mode }} focus</div>
+                  <p style="margin-top:8px">{{ mentor.streams_known|truncatechars:180 }}</p>
+                </div>
+              </div>
+            {% empty %}
+              <div class="col-12">
+                <div class="mentor-card">
+                  <h3>No verified mentors yet</h3>
+                  <p>Once mentor profiles are verified, they will appear here for booking.</p>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-5">
+        <div class="panel">
+          <div class="metric-label">Book a Session</div>
+          <h3 style="margin:4px 0 8px;font-size:1.4rem;font-weight:800">Send your study request</h3>
+          <p class="hero-copy">Share what you studied, what exam or stream you are preparing for, and when you want the online session.</p>
+
+          <form method="POST">
+            {% csrf_token %}
+            <label class="label">Select Mentor</label>
+            <select name="mentor_id" class="control" required>
+              <option value="">Choose mentor</option>
+              {% for mentor in mentors %}
+                <option value="{{ mentor.pk }}">{{ mentor.name }} · {{ mentor.job_role }}</option>
+              {% endfor %}
+            </select>
+
+            <label class="label">Plan Type</label>
+            <select name="plan_type" class="control">
+              {% for value, label in plan_choices %}
+                <option value="{{ value }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+
+            <label class="label">Topic / Subject</label>
+            <input type="text" name="topic" class="control" placeholder="Polity mock questions, Accounts revision, Quant practice..." required>
+
+            <label class="label">Preparing For</label>
+            <input type="text" name="preparation_target" class="control" value="{{ student.preparing_for }}">
+
+            <label class="label">Preferred Online Session Date</label>
+            <input type="date" name="preferred_date" class="control" min="{{ today|date:'Y-m-d' }}">
+
+            <label class="label">What You Studied</label>
+            <textarea name="student_study_notes" class="control" placeholder="Mention chapters, questions, weak areas, or revision points you want the mentor to ask about."></textarea>
+
+            <button type="submit" class="btn-premium">Request Mentorship Session</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="metric-label">Progress History</div>
+      <h3 style="margin:4px 0 8px;font-size:1.4rem;font-weight:800">Your mentorship sessions</h3>
+      <p class="hero-copy">Track your booked sessions, meeting links, marks, and mentor feedback in one place.</p>
+
+      <div class="session-list mt-3">
+        {% for session in sessions %}
+          <div class="session-card">
+            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+              <div>
+                <h4>{{ session.topic }}</h4>
+                <p>{{ session.mentor.name }} · {{ session.plan_type }} mentorship{% if session.preferred_date %} · {{ session.preferred_date }}{% endif %}</p>
+              </div>
+              <span class="status-pill">{{ session.status }}</span>
+            </div>
+            <p>Preparation target: {{ session.preparation_target|default:"—" }}</p>
+            {% if session.meeting_link %}
+              <p><a href="{{ session.meeting_link }}" target="_blank" rel="noopener" style="color:#dceddf;text-decoration:none;font-weight:700">Open online meeting link</a></p>
+            {% endif %}
+            {% if session.mentor_questions %}
+              <div class="feedback-box">
+                <div style="font-size:12px;color:#b8dec3;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px">Questions Asked</div>
+                <div class="muted" style="color:#ffffff">{{ session.mentor_questions|linebreaksbr }}</div>
+              </div>
+            {% endif %}
+            {% if session.mentor_feedback or session.marks_awarded is not None %}
+              <div class="feedback-box">
+                <div style="font-size:12px;color:#b8dec3;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px">Mentor Feedback</div>
+                <div class="muted" style="color:#ffffff">{{ session.mentor_feedback|default:"Feedback will be added after the session."|linebreaksbr }}</div>
+                <div style="margin-top:10px;font-weight:700">Marks: {% if session.marks_awarded is not None %}{{ session.marks_awarded }}{% else %}Not marked yet{% endif %}</div>
+              </div>
+            {% endif %}
+          </div>
+        {% empty %}
+          <div class="session-card">
+            <h4>No sessions booked yet</h4>
+            <p>Your requests, meeting links, marks, and revision feedback will appear here after you book your first session.</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</body>
+</html>

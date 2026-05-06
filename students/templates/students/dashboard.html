@@ -3,225 +3,683 @@
 
 {% block content %}
 <style>
-  .shift-bar  { background: var(--bg-deep); border-radius: 10px; padding: 20px; border: 1px solid var(--border); }
-  .shift-row  { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-  .shift-row:last-child { margin-bottom: 0; }
-  .progress-bar-bg { background: var(--border); border-radius: 6px; height: 8px; flex: 1; margin: 0 14px; overflow: hidden; }
-  .progress-fill   { height: 100%; border-radius: 6px; }
-  .quick-link {
-    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
-    padding: 20px; text-align: center; text-decoration: none; color: var(--text-main);
-    display: block; transition: all 0.2s;
+  .dashboard-hero {
+    background:
+      radial-gradient(circle at top right, rgba(123, 154, 244, 0.24), transparent 26%),
+      linear-gradient(135deg, #2d459b 0%, #3a56b8 54%, #4d68d2 100%);
+    color: #ffffff;
+    border-radius: 28px;
+    padding: 30px;
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 24px 56px rgba(70, 92, 156, 0.24);
+    position: relative;
+    overflow: hidden;
   }
-  .quick-link:hover { border-color: #4f46e5; background: var(--bg-deep); color: var(--text-main); transform: translateY(-2px); }
-  .quick-link .ql-icon { font-size: 28px; margin-bottom: 8px; }
-  .quick-link .ql-text { font-size: 13px; color: var(--text-muted); }
+
+  .dashboard-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(140deg, rgba(255,255,255,0.16), transparent 36%);
+    pointer-events: none;
+  }
+
+  .hero-kicker {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-weight: 700;
+    opacity: 0.82;
+  }
+
+  .hero-title {
+    margin: 12px 0 10px;
+    font-family: "Sora", sans-serif;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    font-weight: 800;
+    letter-spacing: -0.05em;
+  }
+
+  .hero-subtitle {
+    max-width: 620px;
+    color: rgba(255,255,255,0.82);
+    font-size: 14px;
+    line-height: 1.8;
+    margin: 0;
+  }
+
+  .hero-chip-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 22px;
+  }
+
+  .hero-chip {
+    padding: 16px 18px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.14);
+    backdrop-filter: blur(12px);
+  }
+
+  .hero-chip-label {
+    font-size: 12px;
+    color: rgba(255,255,255,0.76);
+    margin-bottom: 6px;
+  }
+
+  .hero-chip-value {
+    font-family: "Sora", sans-serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+  }
+
+  .metric-card {
+    position: relative;
+    padding-top: 26px;
+  }
+
+  .metric-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .metric-badge {
+    width: 54px;
+    height: 54px;
+    border-radius: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    background: var(--bg-deep);
+    color: var(--accent);
+  }
+
+  .metric-note {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 10px;
+    line-height: 1.7;
+  }
+
+  .panel-card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(249,251,255,0.96) 100%);
+    border-radius: 24px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-card);
+    padding: 24px;
+    height: 100%;
+  }
+
+  .panel-title {
+    margin: 0;
+    font-family: "Sora", sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-main);
+  }
+
+  .panel-subtitle {
+    margin-top: 6px;
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .shift-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 22px;
+  }
+
+  .shift-item {
+    display: grid;
+    grid-template-columns: 124px 1fr auto;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .shift-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main);
+  }
+
+  .progress-track {
+    height: 12px;
+    background: #edf2fb;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 999px;
+  }
+
+  .progress-fill.morning {
+    background: linear-gradient(90deg, #63a0ff 0%, #3d6cf2 100%);
+  }
+
+  .progress-fill.evening {
+    background: linear-gradient(90deg, #9b7cff 0%, #7860eb 100%);
+  }
+
+  .progress-fill.fullday {
+    background: linear-gradient(90deg, #ffb46b 0%, #f08732 100%);
+  }
+
+  .shift-count {
+    font-family: "Sora", sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-main);
+  }
+
+  .occupancy-circle {
+    width: 210px;
+    height: 210px;
+    border-radius: 50%;
+    margin: 26px auto 18px;
+    background:
+      conic-gradient(var(--accent) 0deg var(--occupancy-angle), #e5ebf8 var(--occupancy-angle) 360deg);
+    display: grid;
+    place-items: center;
+    position: relative;
+  }
+
+  .occupancy-circle::after {
+    content: "";
+    width: 154px;
+    height: 154px;
+    border-radius: 50%;
+    background: #ffffff;
+    position: absolute;
+  }
+
+  .occupancy-center {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+  }
+
+  .occupancy-value {
+    font-family: "Sora", sans-serif;
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: var(--text-main);
+    line-height: 1;
+  }
+
+  .occupancy-label {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-top: 8px;
+  }
+
+  .quick-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 22px;
+  }
+
+  .quick-link {
+    background: #f7faff;
+    border: 1px solid rgba(102, 126, 174, 0.14);
+    border-radius: 20px;
+    padding: 20px 16px;
+    text-align: left;
+    text-decoration: none;
+    color: var(--text-main);
+    display: block;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  .quick-link:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 32px rgba(98, 118, 160, 0.12);
+    border-color: rgba(61, 108, 242, 0.18);
+    color: var(--text-main);
+  }
+
+  .quick-link-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 16px;
+    background: #eaf1ff;
+    color: var(--accent);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+  }
+
+  .quick-link-title {
+    display: block;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text-main);
+  }
+
+  .quick-link-text {
+    display: block;
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-top: 6px;
+    line-height: 1.6;
+  }
+
+  .money-strip {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .money-card {
+    padding: 22px;
+    border-radius: 22px;
+    background: #f7faff;
+    border: 1px solid rgba(102, 126, 174, 0.14);
+  }
+
+  .money-card .label {
+    color: var(--text-muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+  }
+
+  .money-card .value {
+    margin-top: 10px;
+    font-family: "Sora", sans-serif;
+    font-size: 1.9rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+  }
+
+  .money-card .foot {
+    margin-top: 8px;
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .mode-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 22px;
+  }
+
+  .mode-card {
+    padding: 20px;
+    border-radius: 20px;
+    background: #f7faff;
+    border: 1px solid rgba(102, 126, 174, 0.14);
+  }
+
+  .mode-card .head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .mode-card .head strong {
+    font-size: 14px;
+  }
+
+  .mode-card .head span {
+    font-family: "Sora", sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-main);
+  }
+
+  .mini-track {
+    height: 10px;
+    background: #e8eefb;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .mini-fill.cash {
+    background: linear-gradient(90deg, #ffc165 0%, #f59e0b 100%);
+  }
+
+  .mini-fill.upi {
+    background: linear-gradient(90deg, #46d39a 0%, #1ea66b 100%);
+  }
+
+  .mini-fill.online {
+    background: linear-gradient(90deg, #6998ff 0%, #3d6cf2 100%);
+  }
+
+  .recent-table-wrap {
+    margin-top: 20px;
+    overflow-x: auto;
+    border-radius: 20px;
+    border: 1px solid rgba(102, 126, 174, 0.1);
+  }
+
+  .footer-note {
+    margin-top: 18px;
+    color: var(--text-muted);
+    font-size: 12px;
+    text-align: center;
+  }
+
+  @media (max-width: 991px) {
+    .hero-chip-grid,
+    .money-strip,
+    .mode-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .dashboard-hero {
+      padding: 24px 22px;
+    }
+
+    .quick-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .shift-item {
+      grid-template-columns: 1fr;
+    }
+
+    .occupancy-circle {
+      width: 180px;
+      height: 180px;
+    }
+
+    .occupancy-circle::after {
+      width: 132px;
+      height: 132px;
+    }
+  }
 </style>
 
-<!-- Welcome -->
-<div class="mb-4">
-  <h3 style="font-weight:700">Good day, Admin 👋</h3>
-  <p style="color:var(--text-muted);font-size:14px">{{ current_month }} — Here's your library at a glance</p>
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-subtitle">A cleaner control center for daily library operations, payments, seating, and student tracking.</p>
+  </div>
 </div>
 
-<!-- Stat Cards -->
-<div class="row g-3 mb-4">
-  <div class="col-6 col-md-3">
-    <a href="{% url 'student_list' %}" class="stat-card">
-      <div class="stat-icon">👥</div>
-      <div class="stat-value">{{ total_students }}</div>
-      <div class="stat-label">Total Students</div>
+<div class="dashboard-hero mb-4">
+  <div class="hero-kicker">Today at Valmiki Library</div>
+  <div class="hero-title">Everything important, in one view.</div>
+  <p class="hero-subtitle">{{ current_month }} insights, student activity, fee collection progress, and the fastest shortcuts for everyday admin work.</p>
+
+  <div class="hero-chip-grid">
+    <div class="hero-chip">
+      <div class="hero-chip-label">Current Month</div>
+      <div class="hero-chip-value">{{ current_month }}</div>
+    </div>
+    <div class="hero-chip">
+      <div class="hero-chip-label">Expected Monthly Collection</div>
+      <div class="hero-chip-value">₹{{ expected_monthly }}</div>
+    </div>
+    <div class="hero-chip">
+      <div class="hero-chip-label">Pending Collection</div>
+      <div class="hero-chip-value">₹{{ pending_amount }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-6 col-xl-3">
+    <a href="{% url 'student_list' %}" class="stat-card metric-card">
+      <div class="metric-top">
+        <div>
+          <div class="section-title">Students</div>
+          <div class="stat-value">{{ total_students }}</div>
+        </div>
+        <div class="metric-badge"><i class="bi bi-people-fill"></i></div>
+      </div>
+      <div class="metric-note">Total active profiles currently managed inside the library system.</div>
     </a>
   </div>
-  <div class="col-6 col-md-3">
-    <a href="{% url 'seating_chart' %}" class="stat-card">
-      <div class="stat-icon">🪑</div>
-      <div class="stat-value" style="color:#4ade80">{{ vacant_seats }}</div>
-      <div class="stat-label">Vacant Seats</div>
+  <div class="col-md-6 col-xl-3">
+    <a href="{% url 'seating_chart' %}" class="stat-card metric-card">
+      <div class="metric-top">
+        <div>
+          <div class="section-title">Vacant Seats</div>
+          <div class="stat-value">{{ vacant_seats }}</div>
+        </div>
+        <div class="metric-badge"><i class="bi bi-grid-3x3-gap-fill"></i></div>
+      </div>
+      <div class="metric-note">Instant view of how many seats are still available for new admissions.</div>
     </a>
   </div>
-  <div class="col-6 col-md-3">
-    <a href="{% url 'payment_ledger' %}" class="stat-card">
-      <div class="stat-icon">✅</div>
-      <div class="stat-value" style="color:#4ade80">{{ paid_this_month }}</div>
-      <div class="stat-label">Paid This Month</div>
+  <div class="col-md-6 col-xl-3">
+    <a href="{% url 'payment_ledger' %}" class="stat-card metric-card">
+      <div class="metric-top">
+        <div>
+          <div class="section-title">Paid This Month</div>
+          <div class="stat-value">{{ paid_this_month }}</div>
+        </div>
+        <div class="metric-badge"><i class="bi bi-patch-check-fill"></i></div>
+      </div>
+      <div class="metric-note">Students already marked paid in the ledger for the current month.</div>
     </a>
   </div>
-  <div class="col-6 col-md-3">
-    <a href="{% url 'defaulters' %}" class="stat-card">
-      <div class="stat-icon">⚠️</div>
-      <div class="stat-value" style="color:#f87171">{{ defaulters_count }}</div>
-      <div class="stat-label">Defaulters</div>
+  <div class="col-md-6 col-xl-3">
+    <a href="{% url 'defaulters' %}" class="stat-card metric-card">
+      <div class="metric-top">
+        <div>
+          <div class="section-title">Dues</div>
+          <div class="stat-value">{{ defaulters_count }}</div>
+        </div>
+        <div class="metric-badge"><i class="bi bi-exclamation-diamond-fill"></i></div>
+      </div>
+      <div class="metric-note">Students with pending fees who currently need follow-up or reminders.</div>
     </a>
   </div>
 </div>
 
-<!-- Middle Row -->
-<div class="row g-3 mb-4">
+<div class="row g-4 mb-4">
+  <div class="col-xl-5">
+    <div class="panel-card">
+      <div class="section-title">Student Distribution</div>
+      <h3 class="panel-title">Shift Breakdown</h3>
+      <div class="panel-subtitle">Track how the current student base is distributed across Morning, Evening, and Full Day shifts.</div>
 
-  <!-- Shift Breakdown -->
-  <div class="col-md-5">
-    <div class="section-title">Shift Breakdown</div>
-    <div class="shift-bar">
-      <div class="shift-row">
-        <span style="font-size:14px">☀️ Morning</span>
-        <div class="progress-bar-bg">
-          <div class="progress-fill" style="width:{% if total_students %}{% widthratio morning_count total_students 100 %}{% else %}0{% endif %}%;background:#1d6fa4"></div>
+      <div class="shift-list">
+        <div class="shift-item">
+          <div class="shift-label">Morning</div>
+          <div class="progress-track">
+            <div class="progress-fill morning" style="width:{% if total_students %}{% widthratio morning_count total_students 100 %}{% else %}0{% endif %}%"></div>
+          </div>
+          <div class="shift-count">{{ morning_count }}</div>
         </div>
-        <span style="color:#5bc0eb;font-weight:600">{{ morning_count }}</span>
-      </div>
-      <div class="shift-row">
-        <span style="font-size:14px">🌙 Evening</span>
-        <div class="progress-bar-bg">
-          <div class="progress-fill" style="width:{% if total_students %}{% widthratio evening_count total_students 100 %}{% else %}0{% endif %}%;background:#7b2d8b"></div>
+        <div class="shift-item">
+          <div class="shift-label">Evening</div>
+          <div class="progress-track">
+            <div class="progress-fill evening" style="width:{% if total_students %}{% widthratio evening_count total_students 100 %}{% else %}0{% endif %}%"></div>
+          </div>
+          <div class="shift-count">{{ evening_count }}</div>
         </div>
-        <span style="color:#d66aff;font-weight:600">{{ evening_count }}</span>
-      </div>
-      <div class="shift-row">
-        <span style="font-size:14px">🕐 Full Day</span>
-        <div class="progress-bar-bg">
-          <div class="progress-fill" style="width:{% if total_students %}{% widthratio fullday_count total_students 100 %}{% else %}0{% endif %}%;background:#a84432"></div>
-        </div>
-        <span style="color:#ff7b5e;font-weight:600">{{ fullday_count }}</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Seat Occupancy -->
-  <div class="col-md-4">
-    <div class="section-title">Seat Occupancy</div>
-    <div class="shift-bar text-center">
-      <div style="font-size:52px;font-weight:700;color:#4f46e5">{{ occupied_seats }}%</div>
-      <div style="color:var(--text-muted);font-size:13px">{{ occupied_seats }} of 100 seats occupied</div>
-      <div class="progress-bar-bg mt-3" style="height:12px">
-        <div class="progress-fill" style="width:{{ occupied_seats }}%;background:#4f46e5"></div>
-      </div>
-      <div class="d-flex justify-content-between mt-2" style="font-size:12px;color:var(--text-muted)">
-        <span>0</span><span>100</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Quick Actions -->
-  <div class="col-md-3">
-    <div class="section-title">Quick Actions</div>
-    <div class="d-flex flex-column gap-2">
-      <a href="{% url 'add_student' %}"    class="quick-link"><div class="ql-icon">➕</div><div class="ql-text">Add Student</div></a>
-      <a href="{% url 'payment_ledger' %}" class="quick-link"><div class="ql-icon">📒</div><div class="ql-text">Update Payments</div></a>
-      <a href="{% url 'defaulters' %}"     class="quick-link"><div class="ql-icon">⚠️</div><div class="ql-text">View Defaulters</div></a>
-    </div>
-  </div>
-</div>
-
-<!-- Earnings Section -->
-<div class="section-title mt-4">💰 Earnings — {{ current_month }}</div>
-<div class="row g-3 mb-4">
-  <div class="col-md-4">
-    <div class="stat-card">
-      <div class="stat-icon">💰</div>
-      <div class="stat-value" style="color:#4ade80">₹{{ monthly_earning }}</div>
-      <div class="stat-label">Collected This Month</div>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="stat-card">
-      <div class="stat-icon">🎯</div>
-      <div class="stat-value">₹{{ expected_monthly }}</div>
-      <div class="stat-label">Expected This Month</div>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="stat-card">
-      <div class="stat-icon">⏳</div>
-      <div class="stat-value" style="color:#f87171">₹{{ pending_amount }}</div>
-      <div class="stat-label">Pending Amount</div>
-    </div>
-  </div>
-</div>
-
-<!-- Payment Mode Breakdown -->
-<div class="row g-3 mb-4">
-  <div class="col-md-6">
-    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px">
-      <div class="section-title">Payment Mode</div>
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <span>💵 Cash</span>
-        <strong>{{ cash_students }} students</strong>
-      </div>
-      <div style="background:var(--border);border-radius:6px;height:8px;margin-bottom:14px">
-        <div style="height:100%;border-radius:6px;background:#f59e0b;
-          width:{% if total_students %}{% widthratio cash_students total_students 100 %}{% else %}0{% endif %}%">
-        </div>
-      </div>
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <span>📱 Online</span>
-        <strong>{{ online_students }} students</strong>
-      </div>
-      <div style="background:var(--border);border-radius:6px;height:8px">
-        <div style="height:100%;border-radius:6px;background:#4f46e5;
-          width:{% if total_students %}{% widthratio online_students total_students 100 %}{% else %}0{% endif %}%">
+        <div class="shift-item">
+          <div class="shift-label">Full Day</div>
+          <div class="progress-track">
+            <div class="progress-fill fullday" style="width:{% if total_students %}{% widthratio fullday_count total_students 100 %}{% else %}0{% endif %}%"></div>
+          </div>
+          <div class="shift-count">{{ fullday_count }}</div>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="col-md-6">
-    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px">
-      <div class="section-title">Collection Rate</div>
-      <div style="font-size:48px;font-weight:700;color:#4f46e5;text-align:center">
-        {% if expected_monthly %}
-          {% widthratio monthly_earning expected_monthly 100 %}%
-        {% else %}
-          0%
-        {% endif %}
-      </div>
-      <div style="text-align:center;color:var(--text-muted);font-size:13px">
-        ₹{{ monthly_earning }} collected of ₹{{ expected_monthly }} expected
-      </div>
-      <div style="background:var(--border);border-radius:6px;height:10px;margin-top:12px">
-        <div style="height:100%;border-radius:6px;background:linear-gradient(90deg,#4f46e5,#4ade80);
-          width:{% if expected_monthly %}{% widthratio monthly_earning expected_monthly 100 %}{% else %}0{% endif %}%">
+  <div class="col-xl-4">
+    <div class="panel-card">
+      <div class="section-title">Capacity</div>
+      <h3 class="panel-title">Seat Occupancy</h3>
+      <div class="panel-subtitle">A quick visual pulse of how close your library is to full capacity.</div>
+
+      {% widthratio occupancy_percent 100 360 as occupancy_angle %}
+      <div class="occupancy-circle" style="--occupancy-angle: {{ occupancy_angle }}deg;">
+        <div class="occupancy-center">
+          <div class="occupancy-value">{{ occupancy_percent }}%</div>
+          <div class="occupancy-label">{{ occupied_seats }} of 100 seats occupied</div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3">
+    <div class="panel-card">
+      <div class="section-title">Shortcuts</div>
+      <h3 class="panel-title">Quick Actions</h3>
+      <div class="panel-subtitle">Jump into the most common admin tasks without digging through menus.</div>
+
+      <div class="quick-grid">
+        <a href="{% url 'add_student' %}" class="quick-link">
+          <div class="quick-link-icon"><i class="bi bi-person-plus-fill"></i></div>
+          <span class="quick-link-title">Add Student</span>
+          <span class="quick-link-text">Create a new profile and assign a seat.</span>
+        </a>
+        <a href="{% url 'payment_ledger' %}" class="quick-link">
+          <div class="quick-link-icon"><i class="bi bi-journal-check"></i></div>
+          <span class="quick-link-title">Update Ledger</span>
+          <span class="quick-link-text">Record monthly payments and dues.</span>
+        </a>
+        <a href="{% url 'monthly_reminders' %}" class="quick-link">
+          <div class="quick-link-icon"><i class="bi bi-bell-fill"></i></div>
+          <span class="quick-link-title">Send Reminders</span>
+          <span class="quick-link-text">Open ready-made monthly fee reminders.</span>
+        </a>
+        <a href="{% url 'reports_dashboard' %}" class="quick-link">
+          <div class="quick-link-icon"><i class="bi bi-file-earmark-bar-graph-fill"></i></div>
+          <span class="quick-link-title">Export Reports</span>
+          <span class="quick-link-text">Download monthly and yearly reports.</span>
+        </a>
       </div>
     </div>
   </div>
 </div>
 
+<div class="panel-card mb-4">
+  <div class="section-title">Collections</div>
+  <h3 class="panel-title">Monthly Earnings Overview</h3>
+  <div class="panel-subtitle">A clean view of collected fees, expected revenue, and what still needs to come in this month.</div>
 
-<!-- Recent Students -->
-<div class="section-title">Recently Added Students</div>
-<div style="background:var(--bg-card);border-radius:14px;border:1px solid var(--border);overflow:hidden">
-  <table class="vl-table">
-    <thead>
-      <tr>
-        <th>Name</th><th>Seat</th><th>Shift</th>
-        <th>Contact</th><th>Joined</th><th>Fee</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for student in recent_students %}
-      <tr>
-        <td style="font-weight:500">{{ student.name }}</td>
-        <td>{{ student.seat_number }}</td>
-        <td>
-          <span class="badge-shift {% if student.shift == 'Morning' %}morning{% elif student.shift == 'Evening' %}evening{% else %}fullday{% endif %}">
-            {{ student.shift }}
-          </span>
-        </td>
-        <td style="color:var(--text-muted)">{{ student.contact }}</td>
-        <td style="color:var(--text-muted)">{{ student.joining_date }}</td>
-        <td style="color:#4ade80">₹{{ student.monthly_fee }}</td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="6" class="text-center" style="color:var(--text-muted);padding:30px">
-        No students yet. <a href="{% url 'add_student' %}" style="color:#4f46e5">Add your first student →</a>
-      </td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="money-strip mt-4">
+    <div class="money-card">
+      <div class="label">Collected This Month</div>
+      <div class="value" style="color:var(--success)">₹{{ monthly_earning }}</div>
+      <div class="foot">Payments successfully marked collected in the active billing cycle.</div>
+    </div>
+    <div class="money-card">
+      <div class="label">Expected This Month</div>
+      <div class="value">₹{{ expected_monthly }}</div>
+      <div class="foot">Expected collection based on the current active student list.</div>
+    </div>
+    <div class="money-card">
+      <div class="label">Pending Amount</div>
+      <div class="value" style="color:var(--danger)">₹{{ pending_amount }}</div>
+      <div class="foot">Outstanding collection that still needs follow-up this month.</div>
+    </div>
+  </div>
 </div>
 
-<div class="text-center mt-4" style="color:var(--text-muted);font-size:12px">
-  Valmiki Library Management System · Built with Django by RITU RAJ
+<div class="row g-4 mb-4">
+  <div class="col-lg-5">
+    <div class="panel-card">
+      <div class="section-title">Payment Mix</div>
+      <h3 class="panel-title">Mode of Payment</h3>
+      <div class="panel-subtitle">See how students are paying so collection workflows stay smooth and predictable.</div>
+
+      <div class="mode-grid">
+        <div class="mode-card">
+          <div class="head">
+            <strong>Cash</strong>
+            <span>{{ cash_students }}</span>
+          </div>
+          <div class="mini-track">
+            <div class="mini-fill cash" style="height:100%;width:{% if total_students %}{% widthratio cash_students total_students 100 %}{% else %}0{% endif %}%"></div>
+          </div>
+        </div>
+        <div class="mode-card">
+          <div class="head">
+            <strong>UPI</strong>
+            <span>{{ upi_students }}</span>
+          </div>
+          <div class="mini-track">
+            <div class="mini-fill upi" style="height:100%;width:{% if total_students %}{% widthratio upi_students total_students 100 %}{% else %}0{% endif %}%"></div>
+          </div>
+        </div>
+        <div class="mode-card">
+          <div class="head">
+            <strong>Online</strong>
+            <span>{{ online_students }}</span>
+          </div>
+          <div class="mini-track">
+            <div class="mini-fill online" style="height:100%;width:{% if total_students %}{% widthratio online_students total_students 100 %}{% else %}0{% endif %}%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="panel-card">
+      <div class="section-title">Latest Profiles</div>
+      <h3 class="panel-title">Recently Added Students</h3>
+      <div class="panel-subtitle">A live list of the newest student records added to the library system.</div>
+
+      <div class="recent-table-wrap">
+        <table class="vl-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Seat</th>
+              <th>Shift</th>
+              <th>Contact</th>
+              <th>Joined</th>
+              <th>Fee</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for student in recent_students %}
+              <tr>
+                <td style="font-weight:600">{{ student.name }}</td>
+                <td>{{ student.seat_number }}</td>
+                <td>
+                  <span class="badge-shift {% if student.shift == 'Morning' %}morning{% elif student.shift == 'Evening' %}evening{% else %}fullday{% endif %}">
+                    {{ student.shift }}
+                  </span>
+                </td>
+                <td style="color:var(--text-muted)">{{ student.contact }}</td>
+                <td style="color:var(--text-muted)">{{ student.joining_date }}</td>
+                <td style="font-weight:700;color:var(--success)">₹{{ student.monthly_fee }}</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="6" class="text-center" style="padding:32px;color:var(--text-muted)">
+                  No students yet. <a href="{% url 'add_student' %}" style="color:var(--accent);text-decoration:none">Add your first student</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 </div>
+
+<div class="footer-note">Valmiki Library Management System · cleaner admin workspace for daily operations</div>
 {% endblock %}

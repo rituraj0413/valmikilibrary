@@ -2,21 +2,22 @@
 {% block title %}Students — Valmiki Library{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h3 style="font-weight:700">👤 All Students</h3>
-  <a href="{% url 'add_student' %}" class="btn btn-success">+ Add Student</a>
-  <a href="{% url 'export_students_excel' %}"
-   class="btn btn-success mb-3">
-   📥 Download Excel
-  </a>
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <h3 style="font-weight:700;margin:0">👤 All Students</h3>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{% url 'add_student' %}" class="btn btn-success">+ Add Student</a>
+    <a href="{% url 'export_students_excel' %}" class="btn btn-outline-success">📥 Excel</a>
+    <a href="{% url 'export_students_pdf' %}" class="btn btn-outline-light">🧾 PDF</a>
+    <a href="{% url 'reports_dashboard' %}" class="btn btn-outline-info">📄 Reports</a>
+  </div>
 </div>
 
 <div style="background:var(--bg-card);border-radius:14px;border:1px solid var(--border);overflow:hidden">
   <table class="vl-table">
     <thead>
       <tr>
-        <th>Name</th><th>Contact</th><th>Seat</th>
-        <th>Shift</th><th>Joining Date</th><th>Fee (₹)</th><th>Action</th>
+        <th>Name</th><th>Contact</th><th>Email</th><th>Seat</th>
+        <th>Shift</th><th>Status</th><th>Joining Date</th><th>Fee (₹)</th><th>Portal</th><th>Action</th>
       </tr>
     </thead>
     <tbody>
@@ -24,22 +25,40 @@
       <tr>
         <td style="font-weight:500">{{ student.name }}</td>
         <td>{{ student.contact }}</td>
+        <td style="color:var(--text-muted)">{{ student.email|default:'—' }}</td>
         <td>{{ student.seat_number }}</td>
         <td>
           <span class="badge-shift {% if student.shift == 'Morning' %}morning{% elif student.shift == 'Evening' %}evening{% else %}fullday{% endif %}">
             {{ student.shift }}
           </span>
         </td>
+        <td>
+          <span style="padding:4px 8px;border-radius:999px;font-size:12px;
+            background:{% if student.status == 'Active' %}#123524{% elif student.status == 'On Hold' %}#3b2f0f{% else %}#3f1d1d{% endif %};
+            color:{% if student.status == 'Active' %}#86efac{% elif student.status == 'On Hold' %}#fcd34d{% else %}#fca5a5{% endif %}">
+            {{ student.status }}
+          </span>
+        </td>
         <td>{{ student.joining_date }}</td>
         <td style="color:#4ade80">₹{{ student.monthly_fee }}</td>
         <td>
+          {% if student.email_verified %}
+            <span style="color:#4ade80;font-size:12px;font-weight:600">Verified</span>
+          {% elif student.email %}
+            <span style="color:#fbbf24;font-size:12px;font-weight:600">Pending</span>
+          {% else %}
+            <span style="color:var(--text-muted);font-size:12px">No email</span>
+          {% endif %}
+        </td>
+        <td style="white-space:nowrap">
+          <a href="{% url 'edit_student' student.pk %}" class="btn btn-outline-info btn-sm">Edit</a>
           <a href="{% url 'delete_student' student.pk %}"
              class="btn btn-danger btn-sm"
              onclick="return confirm('Delete {{ student.name }}?')">Delete</a>
         </td>
       </tr>
       {% empty %}
-      <tr><td colspan="7" class="text-center" style="color:var(--text-muted);padding:30px">
+      <tr><td colspan="10" class="text-center" style="color:var(--text-muted);padding:30px">
         No students yet. <a href="{% url 'add_student' %}" style="color:#4f46e5">Add one →</a>
       </td></tr>
       {% endfor %}

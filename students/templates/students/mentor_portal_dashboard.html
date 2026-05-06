@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mentor Dashboard — Valmiki Library</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --green-950: #08170f;
+      --green-900: #10251a;
+      --green-800: #173626;
+      --green-700: #245239;
+      --green-500: #4da36f;
+      --green-300: #b8dec3;
+      --green-200: #dceddf;
+      --white-soft: #f8fcf8;
+      --text-soft: rgba(248, 252, 248, 0.72);
+      --border-soft: rgba(184, 222, 195, 0.14);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--white-soft);
+      font-family: "Manrope", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(184, 222, 195, 0.14), transparent 28%),
+        linear-gradient(140deg, #07120b 0%, #10281b 45%, #173626 100%);
+    }
+
+    .shell {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 34px 22px 56px;
+    }
+
+    .panel {
+      border-radius: 28px;
+      padding: 24px;
+      border: 1px solid var(--border-soft);
+      background: linear-gradient(180deg, rgba(18, 43, 29, 0.95), rgba(12, 30, 20, 0.98));
+      box-shadow: 0 28px 80px rgba(2, 10, 6, 0.32);
+      backdrop-filter: blur(16px);
+      height: 100%;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--green-200);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .hero-title {
+      margin: 16px 0 8px;
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+    }
+
+    .hero-copy,
+    .muted {
+      color: var(--text-soft);
+      line-height: 1.75;
+      font-size: 14px;
+    }
+
+    .action-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn-premium,
+    .btn-outline-premium {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 16px;
+      padding: 14px 20px;
+      font-size: 14px;
+      font-weight: 800;
+      text-decoration: none;
+      border: 1px solid transparent;
+      transition: transform 0.18s ease, background 0.18s ease;
+    }
+
+    .btn-premium {
+      background: linear-gradient(135deg, var(--green-300) 0%, #ffffff 125%);
+      color: var(--green-900);
+    }
+
+    .btn-outline-premium {
+      background: rgba(255,255,255,0.04);
+      border-color: rgba(255,255,255,0.14);
+      color: #ffffff;
+    }
+
+    .btn-premium:hover,
+    .btn-outline-premium:hover {
+      transform: translateY(-2px);
+      color: inherit;
+    }
+
+    .metric-label {
+      color: var(--text-soft);
+      font-size: 13px;
+    }
+
+    .metric-value {
+      margin-top: 8px;
+      font-size: 2.4rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+    }
+
+    .metric-foot {
+      color: var(--green-300);
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    .profile-photo {
+      width: 88px;
+      height: 88px;
+      border-radius: 24px;
+      object-fit: cover;
+      border: 2px solid rgba(255,255,255,0.14);
+    }
+
+    .detail-block {
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .detail-block:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .detail-label {
+      color: var(--green-300);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+
+    .detail-value {
+      color: #ffffff;
+      line-height: 1.7;
+      font-size: 15px;
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    .session-table-wrap {
+      overflow-x: auto;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+    }
+
+    .session-table {
+      margin: 0;
+      color: #ffffff;
+    }
+
+    .session-table th,
+    .session-table td {
+      padding: 14px 16px;
+      border-color: rgba(255,255,255,0.08);
+      vertical-align: middle;
+      font-size: 13px;
+    }
+
+    .session-table th {
+      color: var(--green-200);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: rgba(255,255,255,0.05);
+      white-space: nowrap;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+      color: #ffffff;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .status-requested { color: var(--green-200); }
+    .status-scheduled { background: rgba(77, 163, 111, 0.18); }
+    .status-completed { background: rgba(184, 222, 195, 0.18); }
+    .status-cancelled { background: rgba(255,255,255,0.03); color: var(--green-300); }
+
+    .message {
+      border-radius: 18px;
+      padding: 14px 16px;
+      margin-bottom: 18px;
+      background: rgba(184, 222, 195, 0.1);
+      border: 1px solid rgba(184, 222, 195, 0.16);
+      color: var(--green-200);
+      font-size: 14px;
+    }
+
+    @media (max-width: 767px) {
+      .shell {
+        padding: 22px 14px 40px;
+      }
+
+      .panel {
+        border-radius: 24px;
+      }
+    }
+  </style>
+  {% include 'students/includes/portal_reference_theme.html' %}
+</head>
+<body>
+  <div class="shell">
+    <div class="panel mb-4">
+      <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+        <div>
+          <div class="eyebrow">Mentor Workspace</div>
+          <h1 class="hero-title">{{ mentor.name }}</h1>
+          <p class="hero-copy">Handle online mentorship requests, review student topics before calls, and update marks and feedback after each revision session.</p>
+        </div>
+        <div class="action-group">
+          <a href="{% url 'mentor_portal_logout' %}" class="btn-outline-premium">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="message">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <div class="row g-4 mb-4">
+      <div class="col-md-3">
+        <div class="panel">
+          <div class="metric-label">Total Sessions</div>
+          <div class="metric-value">{{ summary.total_sessions }}</div>
+          <div class="metric-foot">All requests received</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="panel">
+          <div class="metric-label">Scheduled</div>
+          <div class="metric-value">{{ summary.scheduled_sessions }}</div>
+          <div class="metric-foot">Ready for live practice</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="panel">
+          <div class="metric-label">Completed</div>
+          <div class="metric-value">{{ summary.completed_sessions }}</div>
+          <div class="metric-foot">Marked with feedback</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="panel">
+          <div class="metric-label">Revenue</div>
+          <div class="metric-value">₹{{ summary.total_revenue }}</div>
+          <div class="metric-foot">{{ summary.active_students }} active student{{ summary.active_students|pluralize }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+      <div class="col-lg-4">
+        <div class="panel">
+          <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
+            <div>
+              <div class="metric-label">Mentor Profile</div>
+              <h3 style="margin:4px 0 0;font-size:1.2rem;font-weight:800">{{ mentor.job_role }}</h3>
+            </div>
+            {% if mentor.profile_photo %}
+              <img src="{{ mentor.profile_photo.url }}" alt="Mentor photo" class="profile-photo">
+            {% endif %}
+          </div>
+
+          <div class="detail-block">
+            <div class="detail-label">Current Work</div>
+            <div class="detail-value">{{ mentor.current_work|default:"—" }}</div>
+          </div>
+          <div class="detail-block">
+            <div class="detail-label">Experience</div>
+            <div class="detail-value">{{ mentor.experience_years }} year{{ mentor.experience_years|pluralize }}</div>
+          </div>
+          <div class="detail-block">
+            <div class="detail-label">Streams Known</div>
+            <div class="detail-value">{{ mentor.streams_known|linebreaksbr }}</div>
+          </div>
+          <div class="detail-block">
+            <div class="detail-label">Pricing</div>
+            <div class="detail-value">Daily ₹{{ mentor.daily_session_price }} · Monthly ₹{{ mentor.monthly_session_price }}</div>
+          </div>
+          <div class="detail-block">
+            <div class="detail-label">Average Marks Given</div>
+            <div class="detail-value">
+              {% if summary.average_marks is not None %}
+                {{ summary.average_marks|floatformat:1 }}
+              {% else %}
+                No completed marks yet
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-8">
+        <div class="panel">
+          <div class="metric-label">Student Requests</div>
+          <h3 style="margin:4px 0 8px;font-size:1.4rem;font-weight:800">Mentorship Queue</h3>
+          <p class="hero-copy">Open each request to add the meeting link, ask practice questions, and record marks after the session.</p>
+
+          <div class="session-table-wrap">
+            <table class="table session-table table-borderless">
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Preparation</th>
+                  <th>Topic</th>
+                  <th>Status</th>
+                  <th>Price</th>
+                  <th>Marks</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for session in sessions %}
+                  <tr>
+                    <td>
+                      <div style="font-weight:700">{{ session.student.name }}</div>
+                      <div class="muted">Seat {{ session.student.seat_number }} · {{ session.student.shift }}</div>
+                    </td>
+                    <td>{{ session.preparation_target|default:session.student.preparing_for|default:"—" }}</td>
+                    <td>
+                      <div style="font-weight:700">{{ session.topic }}</div>
+                      <div class="muted">{{ session.plan_type }}{% if session.preferred_date %} · {{ session.preferred_date }}{% endif %}</div>
+                    </td>
+                    <td><span class="status-pill status-{{ session.status|lower }}">{{ session.status }}</span></td>
+                    <td>₹{{ session.price }}</td>
+                    <td>{% if session.marks_awarded is not None %}{{ session.marks_awarded }}{% else %}—{% endif %}</td>
+                    <td><a href="{% url 'mentor_session_detail' session.pk %}" class="btn-outline-premium" style="padding:10px 14px">Open</a></td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="7" class="muted">No mentorship requests yet.</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

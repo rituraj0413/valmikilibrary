@@ -173,12 +173,15 @@
         <div>
           <div class="eyebrow">Mentorship Session</div>
           <h1>{{ mentorship_session.topic }}</h1>
-          <p class="muted">{{ mentorship_session.student.name }} is preparing for {{ mentorship_session.preparation_target|default:mentorship_session.student.preparing_for|default:"their exam goal" }}. Use this page to manage the online session, ask questions, and record performance.</p>
+          <p class="muted">{{ mentorship_session.student.name }} is preparing for {{ mentorship_session.preparation_target|default:mentorship_session.student.preparing_for|default:"their exam goal" }}. Use this page to schedule the session, publish the meeting access, ask questions, and record performance.</p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
           <a href="{% url 'mentor_portal_dashboard' %}" class="btn-outline-premium">Back to Dashboard</a>
+          {% if mentorship_session.show_join_actions %}
+            <a href="{{ mentorship_session.live_room_url }}" class="btn-premium">Open VC Room</a>
+          {% endif %}
           {% if mentorship_session.meeting_link %}
-            <a href="{{ mentorship_session.meeting_link }}" target="_blank" rel="noopener" class="btn-premium">Open Meeting</a>
+            <a href="{{ mentorship_session.meeting_link }}" target="_blank" rel="noopener" class="btn-outline-premium">Open Custom Link</a>
           {% endif %}
         </div>
       </div>
@@ -205,12 +208,27 @@
             <div class="detail-value">{{ mentorship_session.student.contact }}</div>
           </div>
           <div class="detail-block">
+            <div class="detail-label">Student Email</div>
+            <div class="detail-value">{{ mentorship_session.student.email|default:"No student email saved yet" }}</div>
+          </div>
+          <div class="detail-block">
             <div class="detail-label">Seat and Shift</div>
             <div class="detail-value">Seat {{ mentorship_session.student.seat_number }} · {{ mentorship_session.student.shift }}</div>
           </div>
           <div class="detail-block">
-            <div class="detail-label">Preferred Session Date</div>
-            <div class="detail-value">{{ mentorship_session.preferred_date|default:"Not selected yet" }}</div>
+            <div class="detail-label">Session Schedule</div>
+            <div class="detail-value">
+              {% if mentorship_session.preferred_date %}
+                {{ mentorship_session.preferred_date }}
+                {% if mentorship_session.scheduled_time %} · {{ mentorship_session.scheduled_time|time:"g:i A" }}{% endif %}
+              {% else %}
+                Not selected yet
+              {% endif %}
+            </div>
+          </div>
+          <div class="detail-block">
+            <div class="detail-label">Student Join View</div>
+            <div class="detail-value">Once you schedule the session or add a link, the student portal will show the join buttons automatically.</div>
           </div>
           <div class="detail-block">
             <div class="detail-label">Student Study Notes</div>
@@ -226,7 +244,7 @@
       <div class="col-lg-8">
         <div class="panel">
           <h3 style="margin:0 0 8px;font-size:1.2rem;font-weight:800">Update Session</h3>
-          <p class="muted">Add your online meeting link, the questions you asked, your feedback, and marks awarded after the session.</p>
+          <p class="muted">Set the session date and time, add your online meeting link if needed, or use the built-in VC room for a more professional in-website meeting experience.</p>
 
           <form method="POST">
             {% csrf_token %}
@@ -243,9 +261,21 @@
                 <label class="label">Price</label>
                 <input type="number" step="0.01" min="0" name="price" class="control" value="{{ mentorship_session.price }}">
               </div>
+              <div class="col-md-6">
+                <label class="label">Scheduled Date</label>
+                <input type="date" name="preferred_date" class="control" value="{{ mentorship_session.preferred_date|date:'Y-m-d' }}">
+              </div>
+              <div class="col-md-6">
+                <label class="label">Scheduled Time</label>
+                <input type="time" name="scheduled_time" class="control" value="{{ mentorship_session.scheduled_time|time:'H:i' }}">
+              </div>
               <div class="col-12">
-                <label class="label">Online Meeting Link</label>
+                <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                  <label class="label" style="margin-bottom:6px">Google Meet / Online Meeting Link</label>
+                  <a href="https://meet.google.com/" target="_blank" rel="noopener" class="btn-outline-premium" style="padding:10px 14px">Open Google Meet</a>
+                </div>
                 <input type="url" name="meeting_link" class="control" value="{{ mentorship_session.meeting_link }}" placeholder="https://meet.google.com/...">
+                <div class="muted" style="margin:-6px 0 14px">Create your Google Meet in a new tab, paste it here, then send the join details to the student. The website VC room will also stay available automatically.</div>
               </div>
               <div class="col-12">
                 <label class="label">Questions Asked During Session</label>
@@ -262,7 +292,8 @@
             </div>
 
             <div class="d-flex gap-3 flex-wrap mt-2">
-              <button type="submit" class="btn-premium">Save Session Update</button>
+              <button type="submit" name="action" value="save" class="btn-premium">Save Session Update</button>
+              <button type="submit" name="action" value="save_and_email" class="btn-outline-premium">Save and Email Student</button>
               <a href="{% url 'mentor_portal_dashboard' %}" class="btn-outline-premium">Back</a>
             </div>
           </form>

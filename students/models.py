@@ -2,6 +2,8 @@ from datetime import date
 
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.utils.text import slugify
+
 
 class Student(models.Model):
     SHIFT_CHOICES = [
@@ -36,6 +38,7 @@ class Student(models.Model):
     academic_details = models.TextField(blank=True)
     profile_photo = models.FileField(upload_to='student_profiles/photos/', blank=True, null=True)
     id_copy = models.FileField(upload_to='student_profiles/id_copies/', blank=True, null=True)
+    payment_qr = models.FileField(upload_to='student_profiles/payment_qr/', blank=True, null=True)
     emergency_contact_name = models.CharField(max_length=100, blank=True)
     emergency_contact_phone = models.CharField(max_length=15, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Active')
@@ -143,6 +146,7 @@ class MentorshipSession(models.Model):
     student_study_notes = models.TextField(blank=True)
     preparation_target = models.CharField(max_length=180, blank=True)
     preferred_date = models.DateField(blank=True, null=True)
+    scheduled_time = models.TimeField(blank=True, null=True)
     meeting_link = models.URLField(blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Requested')
     price = models.DecimalField(max_digits=8, decimal_places=2, default=0)
@@ -152,5 +156,58 @@ class MentorshipSession(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    @property
+    def live_room_name(self):
+        mentor_slug = slugify(self.mentor.name or 'mentor')[:18] or 'mentor'
+        student_slug = slugify(self.student.name or 'student')[:18] or 'student'
+        return f"valmiki-library-session-{self.pk}-{mentor_slug}-{student_slug}"
+
+    @property
+    def join_ready(self):
+        return self.status in {'Scheduled', 'Completed'}
+
     def __str__(self):
         return f"{self.student.name} with {self.mentor.name} ({self.topic})"
+
+
+class StudentOnlinePayment(models.Model):
+    STATUS_CHOICES = [
+        ('created', 'Created'),
+        ('paid', 'Paid'),
+        ('failed', 'Failed'),
+    ]
+
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='online_payments')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=10, default='INR')
+    purpose = models.CharField(max_length=160)
+    months_covered = models.PositiveSmallIntegerField(default=0)
+    razorpay_order_id = models.CharField(max_length=80, unique=True)
+    razorpay_payment_id = models.CharField(max_length=80, blank=True)
+    razorpay_signature = models.CharField(max_length=255, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='created')
+    notes = models.TextField(blank=True)
+    paid_at = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.student.name} · {self.amount} · {self.status}"
+
+
+class PortalMessage(models.Model):
+    SENDER_CHOICES = [
+        ('Student', 'Student'),
+        ('Admin', 'Admin'),
+    ]
+
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='portal_messages')
+    sender_role = models.CharField(max_length=20, choices=SENDER_CHOICES, default='Student')
+    sender_name = models.CharField(max_length=100, blank=True)
+    body = models.TextField(blank=True)
+    attachment = models.FileField(upload_to='portal_messages/attachments/', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        label = self.sender_name or self.sender_role
+        return f"{self.student.name} · {label}"

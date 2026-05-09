@@ -1,0 +1,316 @@
+{% extends 'students/base.html' %}
+{% block title %}Messages — Valmiki Library{% endblock %}
+
+{% block content %}
+<style>
+  .message-page {
+    display: grid;
+    grid-template-columns: 360px minmax(0, 1fr);
+    gap: 24px;
+    min-height: 72vh;
+  }
+
+  .inbox-panel,
+  .chat-panel {
+    background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(249,251,255,0.96) 100%);
+    border-radius: 24px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+
+  .inbox-head,
+  .chat-head {
+    padding: 22px 24px 18px;
+    border-bottom: 1px solid rgba(102, 126, 174, 0.12);
+  }
+
+  .inbox-list {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(72vh - 88px);
+    overflow-y: auto;
+  }
+
+  .conversation-link {
+    display: block;
+    padding: 18px 22px;
+    text-decoration: none;
+    color: var(--text-main);
+    border-bottom: 1px solid rgba(102, 126, 174, 0.08);
+    transition: background 0.18s ease;
+  }
+
+  .conversation-link:hover,
+  .conversation-link.active {
+    background: #f2f6ff;
+    color: var(--text-main);
+  }
+
+  .conversation-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .conversation-name {
+    font-family: "Sora", sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .conversation-meta,
+  .conversation-preview,
+  .empty-note,
+  .chat-subline {
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .conversation-preview {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .chat-thread {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-height: calc(72vh - 252px);
+    overflow-y: auto;
+    background:
+      radial-gradient(circle at top right, rgba(94, 134, 226, 0.08), transparent 22%),
+      linear-gradient(180deg, #fbfcff 0%, #f6f8fd 100%);
+  }
+
+  .chat-bubble {
+    max-width: 78%;
+    border-radius: 20px;
+    padding: 16px 18px;
+    border: 1px solid rgba(102, 126, 174, 0.1);
+    box-shadow: 0 12px 28px rgba(105, 123, 165, 0.08);
+  }
+
+  .chat-bubble.student {
+    align-self: flex-start;
+    background: #ffffff;
+  }
+
+  .chat-bubble.admin {
+    align-self: flex-end;
+    background: linear-gradient(135deg, #eef4ff 0%, #e5f0ff 100%);
+  }
+
+  .bubble-meta {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+
+  .bubble-body {
+    color: var(--text-main);
+    font-size: 14px;
+    line-height: 1.8;
+    word-break: break-word;
+  }
+
+  .bubble-attachment-image,
+  .student-qr-preview {
+    width: 124px;
+    height: 124px;
+    object-fit: cover;
+    border-radius: 18px;
+    border: 1px solid rgba(102, 126, 174, 0.16);
+    margin-top: 12px;
+    background: #ffffff;
+  }
+
+  .bubble-attachment-link,
+  .student-qr-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .bubble-attachment-link:hover,
+  .student-qr-link:hover {
+    color: var(--accent-strong);
+  }
+
+  .student-quick-info {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .info-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: var(--bg-deep);
+    border: 1px solid rgba(102, 126, 174, 0.14);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-main);
+  }
+
+  .reply-box {
+    padding: 22px 24px 24px;
+    border-top: 1px solid rgba(102, 126, 174, 0.12);
+    background: #ffffff;
+  }
+
+  .reply-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 991px) {
+    .message-page {
+      grid-template-columns: 1fr;
+    }
+
+    .inbox-list,
+    .chat-thread {
+      max-height: none;
+    }
+
+    .chat-bubble {
+      max-width: 100%;
+    }
+  }
+</style>
+
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Messages</h1>
+    <p class="page-subtitle">One separate inbox for all student-admin conversations, payment screenshots, and fee follow-ups.</p>
+  </div>
+</div>
+
+<div class="message-page">
+  <section class="inbox-panel">
+    <div class="inbox-head">
+      <div class="section-title" style="margin-bottom:8px">Inbox</div>
+      <div style="font-family:'Sora',sans-serif;font-size:1.2rem;font-weight:700;color:var(--text-main)">Student Chats</div>
+      <div class="chat-subline">{{ conversations|length }} active conversation{{ conversations|length|pluralize }}</div>
+    </div>
+
+    <div class="inbox-list">
+      {% for student in conversations %}
+        <a href="{% url 'message_center' %}?student={{ student.pk }}" class="conversation-link {% if selected_student and selected_student.pk == student.pk %}active{% endif %}">
+          <div class="conversation-top">
+            <div class="conversation-name">{{ student.name }}</div>
+            <div class="conversation-meta">{{ student.latest_portal_message.created_at|date:"M j, g:i A" }}</div>
+          </div>
+          <div class="conversation-meta">Seat {{ student.seat_number }} · {{ student.shift }} · {{ student.portal_message_count }} message{{ student.portal_message_count|pluralize }}</div>
+          <div class="conversation-preview">
+            {% if student.latest_portal_message.body %}
+              {{ student.latest_portal_message.body }}
+            {% elif student.latest_portal_message.attachment %}
+              Attachment shared in chat
+            {% else %}
+              New message
+            {% endif %}
+          </div>
+        </a>
+      {% empty %}
+        <div style="padding:22px" class="empty-note">
+          No student messages yet. Once a student sends a screenshot or note from the portal, the conversation will appear here.
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="chat-panel">
+    {% if selected_student %}
+      <div class="chat-head">
+        <div class="section-title" style="margin-bottom:8px">Conversation</div>
+        <div style="font-family:'Sora',sans-serif;font-size:1.3rem;font-weight:700;color:var(--text-main)">{{ selected_student.name }}</div>
+        <div class="student-quick-info">
+          <span class="info-pill"><i class="bi bi-grid-3x3-gap-fill"></i> Seat {{ selected_student.seat_number }}</span>
+          <span class="info-pill"><i class="bi bi-clock-history"></i> {{ selected_student.shift }}</span>
+          <span class="info-pill"><i class="bi bi-telephone-fill"></i> {{ selected_student.contact }}</span>
+          <span class="info-pill"><i class="bi bi-cash-stack"></i> ₹{{ selected_student.monthly_fee }} / month</span>
+        </div>
+        {% if selected_student.payment_qr %}
+          <div style="margin-top:14px">
+            <div class="chat-subline">Current payment QR available for this student</div>
+            {% if selected_student.payment_qr_is_image %}
+              <img src="{{ selected_student.payment_qr.url }}" alt="Payment QR" class="student-qr-preview">
+            {% endif %}
+            <div>
+              <a href="{{ selected_student.payment_qr.url }}" target="_blank" rel="noopener" class="student-qr-link">Open payment QR</a>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="chat-thread">
+        {% for message in thread %}
+          <article class="chat-bubble {% if message.sender_role == 'Admin' %}admin{% else %}student{% endif %}">
+            <div class="bubble-meta">
+              {{ message.sender_role }}
+              {% if message.sender_name %} · {{ message.sender_name }}{% endif %}
+              · {{ message.created_at|date:"M j, Y g:i A" }}
+            </div>
+            {% if message.body %}
+              <div class="bubble-body">{{ message.body|linebreaksbr }}</div>
+            {% endif %}
+            {% if message.attachment %}
+              {% if message.attachment_is_image %}
+                <img src="{{ message.attachment.url }}" alt="Message attachment" class="bubble-attachment-image">
+              {% endif %}
+              <div>
+                <a href="{{ message.attachment.url }}" target="_blank" rel="noopener" class="bubble-attachment-link">Open attachment</a>
+              </div>
+            {% endif %}
+          </article>
+        {% empty %}
+          <div class="empty-note">This student does not have any chat messages yet.</div>
+        {% endfor %}
+      </div>
+
+      <div class="reply-box">
+        <form method="post" enctype="multipart/form-data" action="{% url 'admin_student_message' selected_student.pk %}">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{% url 'message_center' %}?student={{ selected_student.pk }}">
+          <label class="vl-label">Reply to {{ selected_student.name }}</label>
+          <textarea name="body" class="vl-input" rows="4" placeholder="Confirm the payment, ask for a clearer screenshot, or send the next instruction..."></textarea>
+          <input type="file" name="attachment" class="vl-input" style="padding:10px 14px">
+          <div class="reply-actions">
+            <div class="chat-subline">You can send text, upload a file, or both.</div>
+            <button type="submit" class="btn btn-primary">Send Reply</button>
+          </div>
+        </form>
+      </div>
+    {% else %}
+      <div class="chat-head">
+        <div class="section-title" style="margin-bottom:8px">Conversation</div>
+        <div style="font-family:'Sora',sans-serif;font-size:1.3rem;font-weight:700;color:var(--text-main)">No chat selected</div>
+        <div class="chat-subline">Pick a student from the inbox to open the conversation.</div>
+      </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

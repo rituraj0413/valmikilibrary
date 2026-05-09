@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Live Session Room — Valmiki Library</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #eef4ff;
+      --surface: rgba(255, 255, 255, 0.96);
+      --surface-strong: #ffffff;
+      --line: rgba(38, 64, 122, 0.08);
+      --ink: #15223b;
+      --muted: #61718c;
+      --blue: #3d6cf2;
+      --green: #7ebc4d;
+      --shadow: 0 26px 58px rgba(43, 66, 122, 0.14);
+      --shadow-soft: 0 18px 38px rgba(43, 66, 122, 0.1);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Manrope", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(126, 188, 77, 0.12), transparent 28%),
+        radial-gradient(circle at top right, rgba(61, 108, 242, 0.1), transparent 24%),
+        linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
+    }
+
+    .shell {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 28px 20px 44px;
+    }
+
+    .hero-card,
+    .meta-card,
+    .room-card {
+      border-radius: 30px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-card {
+      padding: 28px;
+      margin-bottom: 24px;
+      background:
+        radial-gradient(circle at top right, rgba(126, 188, 77, 0.16), transparent 24%),
+        linear-gradient(160deg, rgba(255,255,255,0.98) 0%, rgba(248,250,255,0.98) 100%);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(61, 108, 242, 0.08);
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    h1 {
+      margin: 16px 0 10px;
+      font-size: clamp(2.2rem, 4.8vw, 4rem);
+      font-weight: 800;
+      letter-spacing: -0.05em;
+    }
+
+    .hero-copy,
+    .muted {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .btn-premium,
+    .btn-outline-premium {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 16px;
+      padding: 14px 18px;
+      font-size: 14px;
+      font-weight: 800;
+      text-decoration: none;
+      border: 1px solid transparent;
+      transition: transform 0.18s ease;
+    }
+
+    .btn-premium {
+      background: linear-gradient(135deg, #3d6cf2 0%, #7ebc4d 140%);
+      color: #ffffff;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .btn-outline-premium {
+      background: rgba(255,255,255,0.84);
+      color: var(--ink);
+      border-color: rgba(38, 64, 122, 0.14);
+    }
+
+    .btn-premium:hover,
+    .btn-outline-premium:hover {
+      transform: translateY(-2px);
+      color: inherit;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 360px minmax(0, 1fr);
+      gap: 24px;
+    }
+
+    .meta-card,
+    .room-card {
+      padding: 24px;
+    }
+
+    .meta-list {
+      display: grid;
+      gap: 16px;
+    }
+
+    .meta-block {
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(38, 64, 122, 0.08);
+    }
+
+    .meta-block:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .meta-label {
+      color: #7a8aa6;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+
+    .meta-value {
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.7;
+      color: var(--ink);
+      word-break: break-word;
+    }
+
+    .room-stage {
+      border-radius: 24px;
+      overflow: hidden;
+      border: 1px solid rgba(38, 64, 122, 0.08);
+      background: #dfe8fb;
+      min-height: 720px;
+      position: relative;
+    }
+
+    #jitsi-stage,
+    .room-fallback {
+      min-height: 720px;
+    }
+
+    .room-fallback {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      text-align: center;
+      padding: 28px;
+      color: var(--muted);
+    }
+
+    .room-fallback strong {
+      color: var(--ink);
+      font-size: 1.2rem;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+
+    .room-note {
+      margin-top: 18px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(61, 108, 242, 0.06) 0%, rgba(126, 188, 77, 0.08) 100%);
+      border: 1px solid rgba(61, 108, 242, 0.08);
+      color: #30405b;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    @media (max-width: 1040px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 767px) {
+      .shell {
+        padding: 18px 14px 34px;
+      }
+
+      .hero-card,
+      .meta-card,
+      .room-card {
+        border-radius: 24px;
+        padding: 20px;
+      }
+
+      .room-stage,
+      #jitsi-stage,
+      .room-fallback {
+        min-height: 560px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero-card">
+      <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+        <div>
+          <div class="eyebrow">Live Mentorship Room</div>
+          <h1>{{ mentorship_session.topic }}</h1>
+          <p class="hero-copy">
+            Join the session inside the website with a cleaner, more professional video-call experience for both student and mentor.
+          </p>
+        </div>
+
+        <div class="top-actions">
+          {% if participant_role == 'Mentor Portal' %}
+            <a href="{% url 'mentor_session_detail' mentorship_session.pk %}" class="btn-outline-premium">Back to Session</a>
+          {% elif participant_role == 'Student Portal' %}
+            <a href="{% url 'student_portal_mentorship' %}" class="btn-outline-premium">Back to Mentorship</a>
+          {% else %}
+            <a href="{% url 'dashboard' %}" class="btn-outline-premium">Back to Dashboard</a>
+          {% endif %}
+          <a href="{{ jitsi_room_url }}" target="_blank" rel="noopener" class="btn-premium">Open in New Tab</a>
+          {% if mentorship_session.meeting_link %}
+            <a href="{{ mentorship_session.meeting_link }}" target="_blank" rel="noopener" class="btn-outline-premium">Open Mentor Link</a>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    <div class="grid">
+      <aside class="meta-card">
+        <div class="meta-list">
+          <div class="meta-block">
+            <div class="meta-label">Joining As</div>
+            <div class="meta-value">{{ participant_name }} · {{ participant_role }}</div>
+          </div>
+          <div class="meta-block">
+            <div class="meta-label">Mentor</div>
+            <div class="meta-value">{{ mentorship_session.mentor.name }}</div>
+          </div>
+          <div class="meta-block">
+            <div class="meta-label">Student</div>
+            <div class="meta-value">{{ mentorship_session.student.name }}</div>
+          </div>
+          <div class="meta-block">
+            <div class="meta-label">Schedule</div>
+            <div class="meta-value">
+              {% if mentorship_session.preferred_date %}
+                {{ mentorship_session.preferred_date }}
+                {% if mentorship_session.scheduled_time %} · {{ mentorship_session.scheduled_time|time:"g:i A" }}{% endif %}
+              {% else %}
+                The mentor can still update the schedule from the session page.
+              {% endif %}
+            </div>
+          </div>
+          <div class="meta-block">
+            <div class="meta-label">Room Status</div>
+            <div class="meta-value">{{ mentorship_session.status }}</div>
+          </div>
+          <div class="meta-block">
+            <div class="meta-label">Preparation Target</div>
+            <div class="meta-value">{{ mentorship_session.preparation_target|default:mentorship_session.student.preparing_for|default:"—" }}</div>
+          </div>
+          <div class="meta-block">
+            <div class="meta-label">Study Notes</div>
+            <div class="meta-value">{{ mentorship_session.student_study_notes|default:"No notes shared yet."|linebreaksbr }}</div>
+          </div>
+        </div>
+
+        <div class="room-note">
+          Allow camera and microphone access when your browser asks. If the embedded room does not load well on your device, use
+          <strong>Open in New Tab</strong> for the same live session room.
+        </div>
+      </aside>
+
+      <section class="room-card">
+        <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
+          <div>
+            <div class="meta-label">Embedded VC Session</div>
+            <div class="meta-value">Professional in-website joining experience</div>
+          </div>
+          <div class="muted">Room ID: {{ jitsi_room_name }}</div>
+        </div>
+
+        <div class="room-stage">
+          <div id="jitsi-stage">
+            <div class="room-fallback">
+              <strong>Preparing the live meeting room…</strong>
+              <div>Camera, microphone, and screen-share access will work from here once the video room loads.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="https://meet.jit.si/external_api.js"></script>
+  <script>
+    (function () {
+      const stage = document.getElementById("jitsi-stage");
+      if (!stage || typeof window.JitsiMeetExternalAPI === "undefined") {
+        return;
+      }
+
+      stage.innerHTML = "";
+      const api = new window.JitsiMeetExternalAPI("meet.jit.si", {
+        roomName: "{{ jitsi_room_name|escapejs }}",
+        parentNode: stage,
+        width: "100%",
+        height: 720,
+        userInfo: {
+          displayName: "{{ participant_name|escapejs }}"
+        },
+        configOverwrite: {
+          prejoinPageEnabled: false,
+          startWithAudioMuted: false,
+          startWithVideoMuted: false,
+          disableDeepLinking: true
+        },
+        interfaceConfigOverwrite: {
+          MOBILE_APP_PROMO: false,
+          SHOW_JITSI_WATERMARK: false,
+          SHOW_WATERMARK_FOR_GUESTS: false,
+          DEFAULT_BACKGROUND: "#dfe8fb"
+        }
+      });
+
+      window.addEventListener("beforeunload", function () {
+        if (api && typeof api.dispose === "function") {
+          api.dispose();
+        }
+      });
+    }());
+  </script>
+</body>
+</html>

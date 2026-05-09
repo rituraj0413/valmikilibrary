@@ -223,6 +223,78 @@
     color: var(--text-main);
   }
 
+  .payment-qr-box {
+    margin-top: 10px;
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .payment-qr-image,
+  .message-attachment-image {
+    width: 112px;
+    height: 112px;
+    object-fit: cover;
+    border-radius: 16px;
+    border: 1px solid rgba(102, 126, 174, 0.18);
+    background: #ffffff;
+  }
+
+  .message-thread {
+    display: grid;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .message-item {
+    border-radius: 16px;
+    padding: 14px 16px;
+    border: 1px solid rgba(102, 126, 174, 0.12);
+  }
+
+  .message-item.student {
+    background: #f7fbff;
+  }
+
+  .message-item.admin {
+    background: #eef8f2;
+  }
+
+  .message-meta {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .message-body {
+    color: var(--text-main);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .message-attachment-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    color: var(--text-main);
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .message-attachment-link:hover {
+    color: #2563eb;
+  }
+
+  .message-form {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(102, 126, 174, 0.12);
+  }
+
   .vacant-box {
     background: #f7faff;
     border: 1px dashed rgba(102, 126, 174, 0.22);
@@ -318,7 +390,7 @@
 
         {% if row.students %}
           {% for student in row.students %}
-            <div class="student-block">
+            <div class="student-block" id="student-{{ student.pk }}">
               <div class="student-head">
                 <div>
                   <div class="student-name">{{ student.name }}</div>
@@ -400,7 +472,66 @@
                 {% endif %}
               </div>
 
+              <div class="receipt-strip">
+                <div class="detail-label">Payment QR</div>
+                {% if student.payment_qr %}
+                  <div class="payment-qr-box">
+                    {% if student.payment_qr_is_image %}
+                      <img src="{{ student.payment_qr.url }}" alt="Payment QR for {{ student.name }}" class="payment-qr-image">
+                    {% endif %}
+                    <div class="detail-value">
+                      Uploaded payment QR is available in the student portal.
+                      <a href="{{ student.payment_qr.url }}" target="_blank" rel="noopener">Open QR file</a>
+                    </div>
+                  </div>
+                {% else %}
+                  <div class="detail-value">No payment QR uploaded yet for this student.</div>
+                {% endif %}
+              </div>
+
+              <div class="receipt-strip">
+                <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                  <div class="detail-label" style="margin-bottom:0">Message Center</div>
+                  <div class="seat-meta" style="margin-top:0">{{ student.portal_message_count }} message{{ student.portal_message_count|pluralize }}</div>
+                </div>
+
+                <div class="message-thread">
+                  {% for message in student.portal_message_thread %}
+                    <div class="message-item {% if message.sender_role == 'Admin' %}admin{% else %}student{% endif %}">
+                      <div class="message-meta">
+                        {{ message.sender_role }}
+                        {% if message.sender_name %} · {{ message.sender_name }}{% endif %}
+                        · {{ message.created_at|date:"M j, Y g:i A" }}
+                      </div>
+                      {% if message.body %}
+                        <div class="message-body">{{ message.body|linebreaksbr }}</div>
+                      {% endif %}
+                      {% if message.attachment %}
+                        {% if message.attachment_is_image %}
+                          <div style="margin-top:10px">
+                            <img src="{{ message.attachment.url }}" alt="Message attachment" class="message-attachment-image">
+                          </div>
+                        {% endif %}
+                        <a href="{{ message.attachment.url }}" target="_blank" rel="noopener" class="message-attachment-link">
+                          Open attachment
+                        </a>
+                      {% endif %}
+                    </div>
+                  {% empty %}
+                    <div class="detail-value">No messages yet. Students can send payment screenshots or questions here.</div>
+                  {% endfor %}
+                </div>
+
+                <form method="post" enctype="multipart/form-data" action="{% url 'admin_student_message' student.pk %}" class="message-form">
+                  {% csrf_token %}
+                  <textarea name="body" class="vl-input" rows="3" placeholder="Reply to the student or acknowledge the payment screenshot..." style="margin-bottom:12px"></textarea>
+                  <input type="file" name="attachment" class="vl-input" style="padding:10px 14px;margin-bottom:12px">
+                  <button type="submit" class="btn btn-primary btn-sm">Reply as Admin</button>
+                </form>
+              </div>
+
               <div class="action-row">
+                <a href="{% url 'message_center' %}?student={{ student.pk }}" class="btn btn-outline-success btn-sm">Open Chat</a>
                 <a href="{% url 'edit_student' student.pk %}" class="btn btn-outline-info btn-sm">Edit</a>
                 <a href="{% url 'delete_student' student.pk %}" class="btn btn-danger btn-sm" onclick="return confirm('Delete {{ student.name }}?')">Delete</a>
               </div>

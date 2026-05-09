@@ -150,6 +150,11 @@ LIBRARY_ACCESS_REQUEST_EMAIL = os.getenv(
     "realjyotish0001@gmail.com",
 ).strip()
 
+RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "").strip()
+RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "").strip()
+RAZORPAY_CURRENCY = os.getenv("RAZORPAY_CURRENCY", "INR").strip().upper() or "INR"
+RAZORPAY_ENABLED = bool(RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET)
+
 LOGIN_URL          = '/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/login/'

@@ -1,7 +1,13 @@
+import base64
+import hashlib
+import hmac
+import json
 from datetime import date
 from decimal import Decimal, InvalidOperation
 from functools import wraps
 from urllib.parse import urlencode
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
 import openpyxl
 from django.conf import settings
@@ -9,10 +15,14 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core import mail, signing
 from django.core.mail import send_mail
-from django.db.models import Sum
-from django.http import Http404, HttpResponse
+from django.db import transaction
+from django.db.models import Max, Sum
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
+from django.utils.dateparse import parse_date, parse_time
+from django.views.decorators.http import require_POST
 from openpyxl.styles import Font
 
 from .finance import (
@@ -26,7 +36,7 @@ from .finance import (
     paid_lookup,
     yearly_report_rows,
 )
-from .models import Mentor, MentorshipSession, Payment, Student
+from .models import Mentor, MentorshipSession, Payment, PortalMessage, Student, StudentOnlinePayment
 from .pdf_utils import build_simple_pdf
 
 STUDENT_PORTAL_SESSION_KEY = 'student_portal_student_id'
@@ -120,10 +130,168 @@ PUBLIC_PRICING = [
     {'name': 'Quarterly', 'duration': '3 Months', 'price': '450', 'highlight': 'Balanced pricing for growing study spaces.'},
     {'name': 'Annual', 'duration': '1 Year', 'price': '1200', 'highlight': 'Best value for long-term library operations.'},
 ]
+IMAGE_FILE_EXTENSIONS = ('.png', '.jpg', '.jpeg', '.gif', '.webp')
 
 
 def sorted_students():
     return sorted(Student.objects.all(), key=lambda student: (int(student.seat_number), student.name.lower()))
+
+
+def file_is_image(file_field):
+    return bool(file_field and str(file_field.name).lower().endswith(IMAGE_FILE_EXTENSIONS))
+
+
+def next_month_slot(year, month):
+    if month == 12:
+        return year + 1, 1
+    return year, month + 1
+
+
+def build_open_payment_slots(student, months_requested):
+    existing_payments = {
+        (payment.year, payment.month): payment
+        for payment in Payment.objects.filter(student=student)
+    }
+    year = student.joining_date.year
+    month = student.joining_date.month
+    slots = []
+
+    for _ in range(240):
+        payment = existing_payments.get((year, month))
+        if payment is None or not payment.is_paid:
+            slots.append((year, month, payment))
+            if len(slots) >= months_requested:
+                break
+        year, month = next_month_slot(year, month)
+
+    return slots
+
+
+def month_payment_amount(student, months_requested):
+    return student.monthly_fee * Decimal(months_requested)
+
+
+def create_portal_message(student, sender_role, sender_name, body='', attachment=None):
+    message_body = (body or '').strip()
+    if not message_body and not attachment:
+        return None, "Please write a message or attach a payment screenshot."
+
+    portal_message = PortalMessage.objects.create(
+        student=student,
+        sender_role=sender_role,
+        sender_name=sender_name.strip(),
+        body=message_body,
+        attachment=attachment,
+    )
+    portal_message.attachment_is_image = file_is_image(portal_message.attachment)
+    return portal_message, None
+
+
+def decorate_portal_messages(message_queryset):
+    messages_list = list(message_queryset)
+    for portal_message in messages_list:
+        portal_message.attachment_is_image = file_is_image(portal_message.attachment)
+    return messages_list
+
+
+def build_portal_conversations():
+    conversation_students = list(
+        Student.objects.filter(portal_messages__isnull=False)
+        .annotate(latest_message_at=Max('portal_messages__created_at'))
+        .order_by('-latest_message_at', 'name')
+        .distinct()
+    )
+    latest_message_map = {}
+
+    for portal_message in PortalMessage.objects.select_related('student').order_by('student_id', '-created_at'):
+        if portal_message.student_id not in latest_message_map:
+            portal_message.attachment_is_image = file_is_image(portal_message.attachment)
+            latest_message_map[portal_message.student_id] = portal_message
+
+    for student in conversation_students:
+        student.latest_portal_message = latest_message_map.get(student.pk)
+        student.portal_message_count = student.portal_messages.count()
+
+    return conversation_students
+
+
+def razorpay_api_headers():
+    credentials = f"{settings.RAZORPAY_KEY_ID}:{settings.RAZORPAY_KEY_SECRET}".encode()
+    auth_token = base64.b64encode(credentials).decode()
+    return {
+        'Authorization': f'Basic {auth_token}',
+        'Content-Type': 'application/json',
+    }
+
+
+def create_razorpay_order(student, months_requested):
+    if not settings.RAZORPAY_ENABLED:
+        raise ValueError("Razorpay is not configured yet.")
+
+    amount = month_payment_amount(student, months_requested)
+    amount_paise = int(amount * 100)
+    payload = {
+        'amount': amount_paise,
+        'currency': settings.RAZORPAY_CURRENCY,
+        'receipt': f"vl-{student.pk}-{timezone.now().strftime('%Y%m%d%H%M%S')}",
+        'notes': {
+            'student_name': student.name,
+            'seat_number': student.seat_number,
+            'months': str(months_requested),
+        },
+    }
+    request_obj = Request(
+        'https://api.razorpay.com/v1/orders',
+        data=json.dumps(payload).encode(),
+        headers=razorpay_api_headers(),
+        method='POST',
+    )
+
+    try:
+        with urlopen(request_obj, timeout=20) as response:
+            return json.loads(response.read().decode())
+    except HTTPError as exc:
+        detail = exc.read().decode(errors='ignore') or exc.reason
+        raise ValueError(f"Razorpay order creation failed: {detail}") from exc
+    except URLError as exc:
+        raise ValueError("Unable to reach Razorpay right now.") from exc
+
+
+def verify_razorpay_signature(order_id, payment_id, signature):
+    expected_signature = hmac.new(
+        settings.RAZORPAY_KEY_SECRET.encode(),
+        f"{order_id}|{payment_id}".encode(),
+        hashlib.sha256,
+    ).hexdigest()
+    return hmac.compare_digest(expected_signature, signature or '')
+
+
+@transaction.atomic
+def apply_online_payment(student_payment):
+    if student_payment.status == 'paid':
+        return list(
+            Payment.objects.filter(
+                student=student_payment.student,
+                payment_method='Online',
+                paid_on=student_payment.paid_at.date() if student_payment.paid_at else timezone.localdate(),
+            ).order_by('year', 'month')
+        )
+
+    allocated_payments = []
+    for year, month, payment in build_open_payment_slots(student_payment.student, student_payment.months_covered):
+        payment = payment or Payment(student=student_payment.student, month=month, year=year)
+        payment.is_paid = True
+        payment.payment_method = 'Online'
+        payment.amount = student_payment.student.monthly_fee
+        payment.paid_on = timezone.localdate()
+        payment.save()
+        allocated_payments.append(payment)
+
+    student_payment.status = 'paid'
+    student_payment.paid_at = timezone.now()
+    student_payment.notes = ", ".join(payment.month_label for payment in allocated_payments)
+    student_payment.save(update_fields=['status', 'paid_at', 'notes', 'updated_at'])
+    return allocated_payments
 
 
 def parse_money(value, fallback):
@@ -150,6 +318,27 @@ def parse_paid_on(value, fallback):
         return fallback
 
 
+def parse_session_time(value):
+    parsed = parse_time(value or '')
+    return parsed
+
+
+def parse_session_date(value):
+    return parse_date(value or '')
+
+
+def hydrate_mentorship_session(session):
+    session.live_room_url = reverse('mentorship_session_room', args=[session.pk])
+    session.has_external_link = bool(session.meeting_link)
+    session.show_join_actions = session.join_ready or session.has_external_link
+    session.external_meeting_label = (
+        'Join Google Meet'
+        if session.meeting_link and 'meet.google.com' in session.meeting_link.lower()
+        else 'Open Mentor Link'
+    )
+    return session
+
+
 def send_library_access_request_email(request, library_name, requester_name):
     send_mail(
         subject=f'New library access request: {library_name}',
@@ -163,6 +352,48 @@ def send_library_access_request_email(request, library_name, requester_name):
         ),
         from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[settings.LIBRARY_ACCESS_REQUEST_EMAIL],
+        fail_silently=False,
+    )
+
+
+def send_mentorship_join_email(request, mentorship_session):
+    if not mentorship_session.student.email:
+        raise ValueError("Student email is missing")
+
+    website_room_url = request.build_absolute_uri(
+        reverse('mentorship_session_room', args=[mentorship_session.pk])
+    )
+    schedule_line = "To be confirmed by mentor"
+    if mentorship_session.preferred_date and mentorship_session.scheduled_time:
+        schedule_line = (
+            f"{mentorship_session.preferred_date} at "
+            f"{mentorship_session.scheduled_time.strftime('%I:%M %p')}"
+        )
+    elif mentorship_session.preferred_date:
+        schedule_line = str(mentorship_session.preferred_date)
+
+    meet_line = (
+        f"Google Meet link: {mentorship_session.meeting_link}\n"
+        if mentorship_session.meeting_link else
+        "Google Meet link: Not added yet. You can still join from the website room.\n"
+    )
+
+    send_mail(
+        subject=f"Mentorship session join details: {mentorship_session.topic}",
+        message=(
+            f"Hello {mentorship_session.student.name},\n\n"
+            f"Your mentorship session with {mentorship_session.mentor.name} is ready.\n\n"
+            f"Topic: {mentorship_session.topic}\n"
+            f"Preparation target: {mentorship_session.preparation_target or mentorship_session.student.preparing_for or 'General revision'}\n"
+            f"Scheduled time: {schedule_line}\n\n"
+            "Join from the website VC room:\n"
+            f"{website_room_url}\n\n"
+            f"{meet_line}\n"
+            "You can use either the website VC room or the mentor's Google Meet link.\n\n"
+            "Valmiki Library Mentorship"
+        ),
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[mentorship_session.student.email],
         fail_silently=False,
     )
 
@@ -426,6 +657,8 @@ def save_student_from_request(request, student=None):
         student.profile_photo = request.FILES['profile_photo']
     if request.FILES.get('id_copy'):
         student.id_copy = request.FILES['id_copy']
+    if request.FILES.get('payment_qr'):
+        student.payment_qr = request.FILES['payment_qr']
 
     if email != existing_email:
         student.email_verified = False
@@ -630,16 +863,25 @@ def student_detail(request):
     partial_seat_count = sum(1 for row in seat_rows if row['status'] == 'partially-vacant')
     occupied_seat_count = len(seat_numbers) - vacant_seat_count
     payment_map = {}
+    message_map = {}
 
     for payment in Payment.objects.filter(is_paid=True).select_related('student').order_by('student_id', '-year', '-month', '-paid_on'):
         receipts = payment_map.setdefault(payment.student_id, [])
         if len(receipts) < 3:
             receipts.append(payment)
 
+    for portal_message in PortalMessage.objects.select_related('student').order_by('student_id', 'created_at'):
+        thread = message_map.setdefault(portal_message.student_id, [])
+        portal_message.attachment_is_image = file_is_image(portal_message.attachment)
+        thread.append(portal_message)
+
     for row in seat_rows:
         for student in row['students']:
             student.recent_receipts = payment_map.get(student.pk, [])
             student.latest_receipt = student.recent_receipts[0] if student.recent_receipts else None
+            student.payment_qr_is_image = file_is_image(student.payment_qr)
+            student.portal_message_thread = message_map.get(student.pk, [])[-6:]
+            student.portal_message_count = len(message_map.get(student.pk, []))
 
     return render(request, 'students/student_detail.html', {
         'seat_rows': seat_rows,
@@ -648,6 +890,31 @@ def student_detail(request):
         'occupied_seat_count': occupied_seat_count,
         'seat_status_map': seat_status_map,
         'total_seats': len(seat_numbers),
+    })
+
+
+@login_required
+def message_center(request):
+    conversations = build_portal_conversations()
+    selected_student = None
+
+    selected_student_id = request.GET.get('student')
+    if selected_student_id:
+        selected_student = Student.objects.filter(pk=selected_student_id).first()
+    if selected_student is None and conversations:
+        selected_student = conversations[0]
+
+    thread = []
+    if selected_student:
+        thread = decorate_portal_messages(
+            selected_student.portal_messages.order_by('created_at')
+        )
+        selected_student.payment_qr_is_image = file_is_image(selected_student.payment_qr)
+
+    return render(request, 'students/message_center.html', {
+        'conversations': conversations,
+        'selected_student': selected_student,
+        'thread': thread,
     })
 
 
@@ -825,11 +1092,16 @@ def student_portal_dashboard(request):
     receipts = Payment.objects.filter(student=student, is_paid=True).order_by('-year', '-month', '-paid_on')[:12]
     ledger_row = build_ledger_row(student, today.year, today)
     mentorship_progress = mentorship_progress_summary(student)
-    recent_mentorship_sessions = (
+    recent_mentorship_sessions = list(
         MentorshipSession.objects.filter(student=student)
         .select_related('mentor')
         .order_by('-created_at')[:3]
     )
+    portal_messages = list(student.portal_messages.order_by('-created_at')[:20])
+    portal_messages.reverse()
+    decorate_portal_messages(portal_messages)
+    for session in recent_mentorship_sessions:
+        hydrate_mentorship_session(session)
 
     return render(request, 'students/student_portal_dashboard.html', {
         'student': student,
@@ -841,7 +1113,147 @@ def student_portal_dashboard(request):
         'receipts': receipts,
         'mentorship_progress': mentorship_progress,
         'recent_mentorship_sessions': recent_mentorship_sessions,
+        'portal_messages': portal_messages,
+        'payment_qr_is_image': file_is_image(student.payment_qr),
+        'suggested_online_months': max(1, min(overdue['unpaid_count'] or 1, 12)),
+        'razorpay_enabled': settings.RAZORPAY_ENABLED,
+        'razorpay_key_id': settings.RAZORPAY_KEY_ID,
     })
+
+
+@student_portal_required
+@require_POST
+def student_portal_message(request):
+    student = request.student_portal_student
+    _, error = create_portal_message(
+        student=student,
+        sender_role='Student',
+        sender_name=student.name,
+        body=request.POST.get('body', ''),
+        attachment=request.FILES.get('attachment'),
+    )
+
+    if error:
+        messages.error(request, error)
+    else:
+        messages.success(request, "Your message was sent to the admin.")
+    return redirect('student_portal_dashboard')
+
+
+@student_portal_required
+@require_POST
+def student_portal_create_online_payment(request):
+    student = request.student_portal_student
+    try:
+        months_requested = int(request.POST.get('months', '1'))
+    except ValueError:
+        return JsonResponse({'error': 'Invalid number of months selected.'}, status=400)
+
+    if months_requested < 1 or months_requested > 12:
+        return JsonResponse({'error': 'You can pay between 1 and 12 months at a time.'}, status=400)
+
+    try:
+        order_data = create_razorpay_order(student, months_requested)
+    except ValueError as exc:
+        return JsonResponse({'error': str(exc)}, status=503)
+
+    amount = month_payment_amount(student, months_requested)
+    purpose = f"Library fee payment for {months_requested} month{'s' if months_requested > 1 else ''}"
+    student_payment = StudentOnlinePayment.objects.create(
+        student=student,
+        amount=amount,
+        currency=order_data.get('currency', settings.RAZORPAY_CURRENCY),
+        purpose=purpose,
+        months_covered=months_requested,
+        razorpay_order_id=order_data['id'],
+        notes=f"Seat {student.seat_number} · {student.shift}",
+    )
+
+    return JsonResponse({
+        'key': settings.RAZORPAY_KEY_ID,
+        'order_id': student_payment.razorpay_order_id,
+        'amount': order_data.get('amount'),
+        'currency': student_payment.currency,
+        'description': purpose,
+        'student_name': student.name,
+        'student_email': student.email or '',
+        'student_contact': student.contact,
+        'seat_number': student.seat_number,
+        'library_name': request.GET.get('library') or 'Valmiki Library',
+        'months_requested': months_requested,
+    })
+
+
+@student_portal_required
+@require_POST
+def student_portal_verify_online_payment(request):
+    student = request.student_portal_student
+    order_id = request.POST.get('razorpay_order_id', '').strip()
+    payment_id = request.POST.get('razorpay_payment_id', '').strip()
+    signature = request.POST.get('razorpay_signature', '').strip()
+
+    if not order_id or not payment_id or not signature:
+        return JsonResponse({'error': 'Payment verification details are incomplete.'}, status=400)
+
+    student_payment = StudentOnlinePayment.objects.filter(
+        student=student,
+        razorpay_order_id=order_id,
+    ).first()
+    if not student_payment:
+        return JsonResponse({'error': 'Online payment order was not found.'}, status=404)
+
+    if not settings.RAZORPAY_ENABLED:
+        return JsonResponse({'error': 'Razorpay is not configured yet.'}, status=503)
+
+    if student_payment.status == 'paid':
+        return JsonResponse({
+            'success': True,
+            'message': 'This online payment was already recorded.',
+            'months': student_payment.notes.split(', ') if student_payment.notes else [],
+            'receipt_url': '',
+        })
+
+    if not verify_razorpay_signature(order_id, payment_id, signature):
+        student_payment.status = 'failed'
+        student_payment.razorpay_payment_id = payment_id
+        student_payment.razorpay_signature = signature
+        student_payment.save(update_fields=['status', 'razorpay_payment_id', 'razorpay_signature', 'updated_at'])
+        return JsonResponse({'error': 'Payment verification failed. Please contact the admin.'}, status=400)
+
+    student_payment.razorpay_payment_id = payment_id
+    student_payment.razorpay_signature = signature
+    student_payment.save(update_fields=['razorpay_payment_id', 'razorpay_signature', 'updated_at'])
+    allocated_payments = apply_online_payment(student_payment)
+    latest_receipt = allocated_payments[-1] if allocated_payments else None
+
+    return JsonResponse({
+        'success': True,
+        'message': f"Payment recorded successfully for {student_payment.months_covered} month{'s' if student_payment.months_covered > 1 else ''}.",
+        'months': [payment.month_label for payment in allocated_payments],
+        'receipt_url': reverse('payment_receipt_pdf', args=[latest_receipt.pk]) if latest_receipt else '',
+    })
+
+
+@login_required
+@require_POST
+def admin_student_message(request, student_id):
+    student = get_object_or_404(Student, pk=student_id)
+    next_url = request.POST.get('next', '').strip()
+    _, error = create_portal_message(
+        student=student,
+        sender_role='Admin',
+        sender_name=request.user.get_username() or 'Library Admin',
+        body=request.POST.get('body', ''),
+        attachment=request.FILES.get('attachment'),
+    )
+
+    if error:
+        messages.error(request, error)
+    else:
+        messages.success(request, f"Reply sent to {student.name}.")
+    if next_url:
+        return redirect(next_url)
+    return redirect(f"{reverse('student_detail')}#student-{student.pk}")
 
 
 def mentor_portal_register(request):
@@ -927,11 +1339,13 @@ def mentor_portal_logout(request):
 def mentor_portal_dashboard(request):
     mentor = request.mentor_portal_mentor
     summary = mentor_dashboard_summary(mentor)
-    sessions = (
+    sessions = list(
         MentorshipSession.objects.filter(mentor=mentor)
         .select_related('student')
         .order_by('-created_at')
     )
+    for session in sessions:
+        hydrate_mentorship_session(session)
 
     return render(request, 'students/mentor_portal_dashboard.html', {
         'mentor': mentor,
@@ -951,26 +1365,88 @@ def mentor_session_detail(request, session_id):
     error = None
 
     if request.method == 'POST':
+        action = request.POST.get('action', 'save')
         status = request.POST.get('status', mentorship_session.status)
         if status not in [choice[0] for choice in MentorshipSession.STATUS_CHOICES]:
             error = "❌ Invalid session status"
         else:
+            updated_date = parse_session_date(request.POST.get('preferred_date'))
+            updated_time = parse_session_time(request.POST.get('scheduled_time'))
             mentorship_session.status = status
+            mentorship_session.preferred_date = updated_date
+            mentorship_session.scheduled_time = updated_time
             mentorship_session.meeting_link = request.POST.get('meeting_link', '').strip()
             mentorship_session.mentor_questions = request.POST.get('mentor_questions', '').strip()
             mentorship_session.mentor_feedback = request.POST.get('mentor_feedback', '').strip()
             mentorship_session.price = parse_money(request.POST.get('price'), mentorship_session.price)
             marks_value = request.POST.get('marks_awarded', '').strip()
             mentorship_session.marks_awarded = parse_money(marks_value, mentorship_session.marks_awarded or Decimal('0.00')) if marks_value else None
+            if mentorship_session.status == 'Requested' and (
+                mentorship_session.meeting_link or mentorship_session.preferred_date or mentorship_session.scheduled_time
+            ):
+                mentorship_session.status = 'Scheduled'
             mentorship_session.save()
-            messages.success(request, "Mentorship session updated.")
+
+            if action == 'save_and_email':
+                try:
+                    send_mentorship_join_email(request, mentorship_session)
+                except ValueError:
+                    messages.warning(
+                        request,
+                        "Session updated, but the student does not have an email saved yet.",
+                    )
+                except Exception:
+                    messages.error(
+                        request,
+                        "Session updated, but the join email could not be sent. Check email setup and try again.",
+                    )
+                else:
+                    messages.success(
+                        request,
+                        f"Mentorship session updated and join details emailed to {mentorship_session.student.email}.",
+                    )
+            else:
+                messages.success(request, "Mentorship session updated.")
             return redirect('mentor_session_detail', session_id=mentorship_session.pk)
 
+    hydrate_mentorship_session(mentorship_session)
     return render(request, 'students/mentor_session_detail.html', {
         'mentor': mentor,
         'mentorship_session': mentorship_session,
         'status_choices': MentorshipSession.STATUS_CHOICES,
         'error': error,
+    })
+
+
+def mentorship_session_room(request, session_id):
+    mentorship_session = get_object_or_404(
+        MentorshipSession.objects.select_related('student', 'mentor'),
+        pk=session_id,
+    )
+    participant_name = None
+    participant_role = None
+
+    if request.user.is_authenticated:
+        participant_name = request.user.get_username() or 'Library Admin'
+        participant_role = 'Admin Workspace'
+    elif request.session.get(STUDENT_PORTAL_SESSION_KEY) == mentorship_session.student_id:
+        participant_name = mentorship_session.student.name
+        participant_role = 'Student Portal'
+    elif request.session.get(MENTOR_PORTAL_SESSION_KEY) == mentorship_session.mentor_id:
+        participant_name = mentorship_session.mentor.name
+        participant_role = 'Mentor Portal'
+    elif request.session.get(MENTOR_PORTAL_SESSION_KEY):
+        return redirect('mentor_portal_login')
+    else:
+        return redirect('student_portal_login')
+
+    hydrate_mentorship_session(mentorship_session)
+    return render(request, 'students/mentorship_session_room.html', {
+        'mentorship_session': mentorship_session,
+        'participant_name': participant_name,
+        'participant_role': participant_role,
+        'jitsi_room_name': mentorship_session.live_room_name,
+        'jitsi_room_url': f"https://meet.jit.si/{mentorship_session.live_room_name}",
     })
 
 
@@ -1009,7 +1485,11 @@ def student_portal_mentorship(request):
             messages.success(request, f"Mentorship request sent to {mentor.name}.")
             return redirect('student_portal_mentorship')
 
-    sessions = MentorshipSession.objects.filter(student=student).select_related('mentor').order_by('-created_at')
+    sessions = list(
+        MentorshipSession.objects.filter(student=student).select_related('mentor').order_by('-created_at')
+    )
+    for session in sessions:
+        hydrate_mentorship_session(session)
     progress = mentorship_progress_summary(student)
 
     return render(request, 'students/student_portal_mentorship.html', {

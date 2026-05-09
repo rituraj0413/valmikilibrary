@@ -430,6 +430,178 @@
       line-height: 1.7;
     }
 
+    .alert-portal {
+      margin-bottom: 18px;
+      border-radius: 18px;
+      padding: 14px 16px;
+      border: 1px solid rgba(214, 234, 219, 0.14);
+      font-size: 14px;
+      font-weight: 600;
+      backdrop-filter: blur(12px);
+    }
+
+    .alert-portal.success {
+      background: rgba(73, 160, 106, 0.18);
+      color: #ffffff;
+    }
+
+    .alert-portal.error {
+      background: rgba(89, 38, 44, 0.34);
+      color: #ffe1e1;
+    }
+
+    .payment-stack,
+    .message-stack {
+      display: grid;
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .payment-action-card {
+      padding: 18px;
+      border-radius: 22px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(214, 234, 219, 0.08);
+    }
+
+    .payment-action-card h4,
+    .message-thread-title {
+      margin: 0 0 8px;
+      font-size: 1.02rem;
+      font-weight: 800;
+    }
+
+    .payment-action-card p,
+    .message-note {
+      margin: 0;
+      color: var(--text-soft);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .payment-inline-form {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: end;
+      margin-top: 16px;
+    }
+
+    .payment-inline-field {
+      flex: 1 1 180px;
+    }
+
+    .payment-inline-field label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--green-200);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .premium-input {
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid rgba(214, 234, 219, 0.14);
+      background: rgba(255,255,255,0.05);
+      color: #ffffff;
+      padding: 13px 16px;
+      font-size: 14px;
+      outline: none;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+
+    .premium-input::placeholder {
+      color: rgba(248, 252, 248, 0.45);
+    }
+
+    .premium-input[type="file"] {
+      padding: 10px 14px;
+    }
+
+    .payment-status-line {
+      margin-top: 14px;
+      color: var(--green-200);
+      font-size: 13px;
+      font-weight: 700;
+      min-height: 20px;
+    }
+
+    .qr-preview {
+      width: 168px;
+      height: 168px;
+      object-fit: cover;
+      border-radius: 24px;
+      background: #ffffff;
+      border: 1px solid rgba(214, 234, 219, 0.18);
+      box-shadow: 0 18px 38px rgba(4, 17, 10, 0.18);
+    }
+
+    .message-thread {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+      max-height: 360px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .message-bubble {
+      padding: 16px;
+      border-radius: 20px;
+      border: 1px solid rgba(214, 234, 219, 0.1);
+    }
+
+    .message-bubble.student {
+      background: rgba(255,255,255,0.05);
+    }
+
+    .message-bubble.admin {
+      background: rgba(73, 160, 106, 0.16);
+    }
+
+    .message-meta {
+      color: var(--green-300);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .message-body {
+      color: #ffffff;
+      font-size: 14px;
+      line-height: 1.75;
+    }
+
+    .message-attachment-image {
+      width: 130px;
+      height: 130px;
+      object-fit: cover;
+      border-radius: 18px;
+      border: 1px solid rgba(214, 234, 219, 0.16);
+      background: #ffffff;
+      margin-top: 10px;
+    }
+
+    .message-attachment-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      color: var(--green-200);
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .message-attachment-link:hover {
+      color: #ffffff;
+    }
+
     @media (max-width: 991px) {
       .hero-title {
         font-size: 2.75rem;
@@ -459,6 +631,11 @@
 
       .action-group {
         width: 100%;
+      }
+
+      .payment-inline-form {
+        flex-direction: column;
+        align-items: stretch;
       }
 
       .btn-premium,
@@ -491,6 +668,14 @@
         </div>
       </div>
     </div>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert-portal {% if message.tags == 'error' %}error{% else %}success{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
 
     <div class="row g-4 mb-4">
       <div class="col-md-4">
@@ -644,6 +829,111 @@
     <div class="row g-4 mb-4">
       <div class="col-lg-5">
         <div class="panel">
+          <div class="section-kicker">Payments</div>
+          <h3 class="section-title">Online Payment & QR</h3>
+          <div class="section-subtitle">Pay with Razorpay inside the portal or scan the admin-uploaded QR and share the screenshot below.</div>
+
+          <div class="payment-stack">
+            <div class="payment-action-card">
+              <h4>Pay Online with Razorpay</h4>
+              <p>
+                Monthly fee: ₹{{ student.monthly_fee }}. You can pay one or more months together and the system will allocate the payment to your earliest unpaid months first.
+              </p>
+
+              {% if razorpay_enabled %}
+                <div class="payment-inline-form">
+                  <div class="payment-inline-field">
+                    <label for="monthsToPay">Months to pay</label>
+                    <input id="monthsToPay" type="number" min="1" max="12" value="{{ suggested_online_months }}" class="premium-input">
+                  </div>
+                  <button type="button" class="btn-premium" id="razorpayPayButton">Pay with Razorpay</button>
+                </div>
+                <div class="payment-status-line" id="paymentStatusLine"></div>
+              {% else %}
+                <div class="notice-box">
+                  <h5>Online payment not configured yet</h5>
+                  <p>Admin needs to add Razorpay keys in the server settings before this payment button can be used.</p>
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="payment-action-card">
+              <h4>Scan QR and Pay</h4>
+              {% if student.payment_qr %}
+                <div class="d-flex gap-3 align-items-center flex-wrap" style="margin-top:12px">
+                  {% if payment_qr_is_image %}
+                    <img src="{{ student.payment_qr.url }}" alt="Payment QR" class="qr-preview">
+                  {% endif %}
+                  <div>
+                    <p>Use this QR for UPI or manual payment to the library admin.</p>
+                    <a href="{{ student.payment_qr.url }}" target="_blank" rel="noopener" class="btn-outline-premium" style="margin-top:12px">Open QR</a>
+                  </div>
+                </div>
+                <div class="summary-chip">After paying by QR, upload your screenshot in the message center so the admin can confirm it.</div>
+              {% else %}
+                <p>No QR has been uploaded by the admin yet. You can still use the online payment option above when available.</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-7">
+        <div class="panel">
+          <div class="section-kicker">Communication</div>
+          <h3 class="section-title">Message Admin</h3>
+          <div class="section-subtitle">Ask payment questions, share a screenshot after QR payment, or follow up on dues.</div>
+
+          <div class="message-thread">
+            {% for portal_message in portal_messages %}
+              <div class="message-bubble {% if portal_message.sender_role == 'Admin' %}admin{% else %}student{% endif %}">
+                <div class="message-meta">
+                  {{ portal_message.sender_role }}
+                  {% if portal_message.sender_name %} · {{ portal_message.sender_name }}{% endif %}
+                  · {{ portal_message.created_at|date:"M j, Y g:i A" }}
+                </div>
+                {% if portal_message.body %}
+                  <div class="message-body">{{ portal_message.body|linebreaksbr }}</div>
+                {% endif %}
+                {% if portal_message.attachment %}
+                  {% if portal_message.attachment_is_image %}
+                    <div>
+                      <img src="{{ portal_message.attachment.url }}" alt="Message attachment" class="message-attachment-image">
+                    </div>
+                  {% endif %}
+                  <a href="{{ portal_message.attachment.url }}" target="_blank" rel="noopener" class="message-attachment-link">Open attachment</a>
+                {% endif %}
+              </div>
+            {% empty %}
+              <div class="message-bubble student">
+                <div class="message-meta">Message Center</div>
+                <div class="message-body">No messages yet. You can send a payment screenshot, ask the admin for help, or confirm that you have paid.</div>
+              </div>
+            {% endfor %}
+          </div>
+
+          <form method="post" enctype="multipart/form-data" action="{% url 'student_portal_message' %}" class="message-stack" style="margin-top:18px">
+            {% csrf_token %}
+            <div>
+              <label for="studentMessageBody" class="detail-label" style="display:block">Message</label>
+              <textarea id="studentMessageBody" name="body" rows="4" class="premium-input" placeholder="I have paid by QR. Please find the screenshot attached."></textarea>
+            </div>
+            <div>
+              <label for="studentMessageAttachment" class="detail-label" style="display:block">Attachment</label>
+              <input id="studentMessageAttachment" type="file" name="attachment" class="premium-input">
+            </div>
+            <div class="d-flex gap-2 flex-wrap align-items-center">
+              <button type="submit" class="btn-premium">Send to Admin</button>
+              <div class="message-note">You can send a note, an image screenshot, or both.</div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+      <div class="col-lg-5">
+        <div class="panel">
           <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
             <div>
               <div class="section-kicker">Mentorship</div>
@@ -706,7 +996,11 @@
                 <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
                   <div>
                     <h4>{{ session.topic }}</h4>
-                    <p>{{ session.mentor.name }} · {{ session.plan_type }} mentorship{% if session.preferred_date %} · {{ session.preferred_date }}{% endif %}</p>
+                    <p>
+                      {{ session.mentor.name }} · {{ session.plan_type }} mentorship
+                      {% if session.preferred_date %} · {{ session.preferred_date }}{% endif %}
+                      {% if session.scheduled_time %} · {{ session.scheduled_time|time:"g:i A" }}{% endif %}
+                    </p>
                   </div>
                   <span class="status-pill status-{{ session.status|lower }}">{{ session.status }}</span>
                 </div>
@@ -719,6 +1013,14 @@
                     Mentor feedback and practice notes will appear here once the session progresses.
                   {% endif %}
                 </p>
+                {% if session.show_join_actions %}
+                  <div class="d-flex gap-2 flex-wrap" style="margin-top:12px">
+                    <a href="{{ session.live_room_url }}" class="btn-premium" style="padding:12px 16px">Join Live VC Room</a>
+                    {% if session.meeting_link %}
+                      <a href="{{ session.meeting_link }}" target="_blank" rel="noopener" class="btn-outline-premium" style="padding:12px 16px">{{ session.external_meeting_label }}</a>
+                    {% endif %}
+                  </div>
+                {% endif %}
               </div>
             {% empty %}
               <div class="mentor-item">
@@ -770,5 +1072,94 @@
       </div>
     </div>
   </div>
+
+  {% if razorpay_enabled %}
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+      const payButton = document.getElementById('razorpayPayButton');
+      const monthsInput = document.getElementById('monthsToPay');
+      const paymentStatusLine = document.getElementById('paymentStatusLine');
+
+      function getCsrfToken() {
+        return document.querySelector('input[name="csrfmiddlewaretoken"]')?.value || '';
+      }
+
+      function setPaymentStatus(message, isError = false) {
+        if (!paymentStatusLine) return;
+        paymentStatusLine.textContent = message;
+        paymentStatusLine.style.color = isError ? '#ffd0d0' : 'var(--green-200)';
+      }
+
+      async function postPortalForm(url, params) {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCsrfToken(),
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: new URLSearchParams(params),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Request could not be completed.');
+        }
+        return data;
+      }
+
+      payButton?.addEventListener('click', async function () {
+        const months = parseInt(monthsInput?.value || '1', 10);
+        if (!months || months < 1 || months > 12) {
+          setPaymentStatus('Please choose between 1 and 12 months.', true);
+          return;
+        }
+
+        try {
+          payButton.disabled = true;
+          setPaymentStatus('Creating your secure payment order...');
+          const order = await postPortalForm("{% url 'student_portal_create_online_payment' %}", { months });
+
+          const razorpayOptions = {
+            key: order.key,
+            amount: order.amount,
+            currency: order.currency,
+            name: order.library_name,
+            description: order.description,
+            order_id: order.order_id,
+            prefill: {
+              name: order.student_name,
+              email: order.student_email,
+              contact: order.student_contact,
+            },
+            theme: {
+              color: '#2f734d',
+            },
+            handler: async function (response) {
+              try {
+                setPaymentStatus('Verifying payment and updating your receipts...');
+                const verification = await postPortalForm("{% url 'student_portal_verify_online_payment' %}", response);
+                const coveredMonths = verification.months?.length ? ` Covered months: ${verification.months.join(', ')}` : '';
+                setPaymentStatus(`${verification.message}${coveredMonths}`);
+                window.setTimeout(() => window.location.reload(), 1400);
+              } catch (error) {
+                setPaymentStatus(error.message, true);
+              }
+            },
+          };
+
+          const razorpay = new Razorpay(razorpayOptions);
+          razorpay.on('payment.failed', function (response) {
+            const message = response?.error?.description || 'Payment failed or was cancelled.';
+            setPaymentStatus(message, true);
+          });
+          razorpay.open();
+        } catch (error) {
+          setPaymentStatus(error.message, true);
+        } finally {
+          payButton.disabled = false;
+        }
+      });
+    </script>
+  {% endif %}
 </body>
 </html>

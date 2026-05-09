@@ -356,12 +356,19 @@
                     <td>{{ session.preparation_target|default:session.student.preparing_for|default:"—" }}</td>
                     <td>
                       <div style="font-weight:700">{{ session.topic }}</div>
-                      <div class="muted">{{ session.plan_type }}{% if session.preferred_date %} · {{ session.preferred_date }}{% endif %}</div>
+                      <div class="muted">{{ session.plan_type }}{% if session.preferred_date %} · {{ session.preferred_date }}{% endif %}{% if session.scheduled_time %} · {{ session.scheduled_time|time:"g:i A" }}{% endif %}</div>
                     </td>
                     <td><span class="status-pill status-{{ session.status|lower }}">{{ session.status }}</span></td>
                     <td>₹{{ session.price }}</td>
                     <td>{% if session.marks_awarded is not None %}{{ session.marks_awarded }}{% else %}—{% endif %}</td>
-                    <td><a href="{% url 'mentor_session_detail' session.pk %}" class="btn-outline-premium" style="padding:10px 14px">Open</a></td>
+                    <td>
+                      <div class="d-flex gap-2 flex-wrap">
+                        <a href="{% url 'mentor_session_detail' session.pk %}" class="btn-outline-premium" style="padding:10px 14px">Open</a>
+                        {% if session.show_join_actions %}
+                          <a href="{{ session.live_room_url }}" class="btn-premium" style="padding:10px 14px">VC Room</a>
+                        {% endif %}
+                      </div>
+                    </td>
                   </tr>
                 {% empty %}
                   <tr>

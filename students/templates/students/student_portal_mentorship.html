@@ -362,7 +362,7 @@
         <div class="panel">
           <div class="metric-label">Book a Session</div>
           <h3 style="margin:4px 0 8px;font-size:1.4rem;font-weight:800">Send your study request</h3>
-          <p class="hero-copy">Share what you studied, what exam or stream you are preparing for, and when you want the online session.</p>
+          <p class="hero-copy">Share what you studied, what exam or stream you are preparing for, and when you want the online session. Your mentor can then schedule the exact time and publish your join access.</p>
 
           <form method="POST">
             {% csrf_token %}
@@ -404,19 +404,31 @@
       <h3 style="margin:4px 0 8px;font-size:1.4rem;font-weight:800">Your mentorship sessions</h3>
       <p class="hero-copy">Track your booked sessions, meeting links, marks, and mentor feedback in one place.</p>
 
-      <div class="session-list mt-3">
+          <div class="session-list mt-3">
         {% for session in sessions %}
           <div class="session-card">
             <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
               <div>
                 <h4>{{ session.topic }}</h4>
-                <p>{{ session.mentor.name }} · {{ session.plan_type }} mentorship{% if session.preferred_date %} · {{ session.preferred_date }}{% endif %}</p>
+                <p>
+                  {{ session.mentor.name }} · {{ session.plan_type }} mentorship
+                  {% if session.preferred_date %} · {{ session.preferred_date }}{% endif %}
+                  {% if session.scheduled_time %} · {{ session.scheduled_time|time:"g:i A" }}{% endif %}
+                </p>
               </div>
               <span class="status-pill">{{ session.status }}</span>
             </div>
             <p>Preparation target: {{ session.preparation_target|default:"—" }}</p>
-            {% if session.meeting_link %}
-              <p><a href="{{ session.meeting_link }}" target="_blank" rel="noopener" style="color:#dceddf;text-decoration:none;font-weight:700">Open online meeting link</a></p>
+            {% if session.show_join_actions %}
+              <div class="d-flex gap-2 flex-wrap" style="margin:10px 0 12px">
+                <a href="{{ session.live_room_url }}" class="btn-premium" style="padding:12px 16px">Join Live VC Room</a>
+                {% if session.meeting_link %}
+                  <a href="{{ session.meeting_link }}" target="_blank" rel="noopener" class="btn-outline-premium" style="padding:12px 16px">{{ session.external_meeting_label }}</a>
+                {% endif %}
+              </div>
+              <p style="margin-top:0">When it is time for your session, use the live VC room button to join directly inside the website.</p>
+            {% elif session.status == 'Requested' %}
+              <p>Your mentor has received the request. Once they schedule the time, the join button will appear here automatically.</p>
             {% endif %}
             {% if session.mentor_questions %}
               <div class="feedback-box">

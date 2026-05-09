@@ -1,13 +1,16 @@
-from datetime import date
+import hashlib
+import hmac
+from datetime import date, time
 from decimal import Decimal
 from unittest.mock import patch
 
 from django.core import mail
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from .models import Mentor, MentorshipSession, Payment, Student
+from .models import Mentor, MentorshipSession, Payment, PortalMessage, Student, StudentOnlinePayment
 from .views import build_mentor_verification_token, build_student_verification_token
 
 
@@ -164,6 +167,70 @@ class SeatingChartStatusTests(TestCase):
         self.assertContains(response, 'Latest paid receipt')
         self.assertContains(response, payment.month_label)
         self.assertContains(response, reverse('payment_receipt_pdf', args=[payment.pk]))
+
+    def test_admin_can_reply_to_student_from_student_detail_message_center(self):
+        student = Student.objects.create(
+            name='Message Detail Student',
+            contact='8888888891',
+            seat_number='27',
+            shift='Morning',
+            joining_date=date(2026, 1, 1),
+            monthly_fee=600,
+            mode_of_payment='UPI',
+        )
+
+        response = self.client.post(
+            reverse('admin_student_message', args=[student.pk]),
+            {
+                'body': 'Please share the payment screenshot here.',
+            },
+        )
+
+        self.assertRedirects(response, f"{reverse('student_detail')}#student-{student.pk}")
+        message = PortalMessage.objects.get(student=student)
+        self.assertEqual(message.sender_role, 'Admin')
+        self.assertIn('payment screenshot', message.body)
+
+    def test_message_center_page_shows_student_conversation_and_admin_reply(self):
+        student = Student.objects.create(
+            name='Chat Student',
+            contact='8888888892',
+            seat_number='28',
+            shift='Evening',
+            joining_date=date(2026, 1, 1),
+            monthly_fee=650,
+            mode_of_payment='Online',
+        )
+        PortalMessage.objects.create(
+            student=student,
+            sender_role='Student',
+            sender_name=student.name,
+            body='I have sent the payment screenshot. Please confirm.',
+        )
+
+        response = self.client.get(reverse('message_center'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Messages')
+        self.assertContains(response, 'Chat Student')
+        self.assertContains(response, 'payment screenshot')
+
+        reply_response = self.client.post(
+            reverse('admin_student_message', args=[student.pk]),
+            {
+                'body': 'Payment confirmed from admin side.',
+                'next': f"{reverse('message_center')}?student={student.pk}",
+            },
+        )
+
+        self.assertRedirects(reply_response, f"{reverse('message_center')}?student={student.pk}")
+        self.assertTrue(
+            PortalMessage.objects.filter(
+                student=student,
+                sender_role='Admin',
+                body__icontains='Payment confirmed',
+            ).exists()
+        )
 
 
 class PaymentLedgerSummaryTests(TestCase):
@@ -419,6 +486,162 @@ class StudentPortalTests(TestCase):
         self.assertEqual(receipt_response.status_code, 200)
         self.assertEqual(receipt_response['Content-Type'], 'application/pdf')
 
+    def test_student_dashboard_shows_qr_payment_and_message_section(self):
+        self.student.email_verified = True
+        self.student.payment_qr = SimpleUploadedFile('student-qr.png', b'fake-qr-image', content_type='image/png')
+        self.student.save(update_fields=['email_verified', 'payment_qr'])
+
+        self.client.post(
+            reverse('student_portal_login'),
+            {
+                'name': self.student.name,
+                'email': self.student.email,
+                'contact': self.student.contact,
+                'date_of_birth': self.student.date_of_birth.isoformat(),
+                'action': 'login',
+            },
+        )
+
+        response = self.client.get(reverse('student_portal_dashboard'))
+
+        self.assertContains(response, 'Online Payment & QR')
+        self.assertContains(response, 'Message Admin')
+        self.assertContains(response, 'Open QR')
+
+    def test_student_can_send_message_with_attachment_to_admin(self):
+        self.student.email_verified = True
+        self.student.save(update_fields=['email_verified'])
+
+        self.client.post(
+            reverse('student_portal_login'),
+            {
+                'name': self.student.name,
+                'email': self.student.email,
+                'contact': self.student.contact,
+                'date_of_birth': self.student.date_of_birth.isoformat(),
+                'action': 'login',
+            },
+        )
+
+        response = self.client.post(
+            reverse('student_portal_message'),
+            {
+                'body': 'I have paid by QR. Please check my screenshot.',
+                'attachment': SimpleUploadedFile('payment-proof.png', b'proof', content_type='image/png'),
+            },
+        )
+
+        self.assertRedirects(response, reverse('student_portal_dashboard'))
+        portal_message = PortalMessage.objects.get(student=self.student)
+        self.assertEqual(portal_message.sender_role, 'Student')
+        self.assertIn('paid by QR', portal_message.body)
+        self.assertIn('payment-proof', portal_message.attachment.name)
+
+    @override_settings(
+        RAZORPAY_ENABLED=True,
+        RAZORPAY_KEY_ID='rzp_test_123',
+        RAZORPAY_KEY_SECRET='secret456',
+        RAZORPAY_CURRENCY='INR',
+    )
+    @patch('students.views.create_razorpay_order')
+    def test_student_can_create_razorpay_order_from_portal(self, mocked_create_order):
+        self.student.email_verified = True
+        self.student.save(update_fields=['email_verified'])
+        mocked_create_order.return_value = {
+            'id': 'order_test_123',
+            'amount': 160000,
+            'currency': 'INR',
+        }
+
+        self.client.post(
+            reverse('student_portal_login'),
+            {
+                'name': self.student.name,
+                'email': self.student.email,
+                'contact': self.student.contact,
+                'date_of_birth': self.student.date_of_birth.isoformat(),
+                'action': 'login',
+            },
+        )
+
+        response = self.client.post(
+            reverse('student_portal_create_online_payment'),
+            {'months': '2'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(
+            response.content,
+            {
+                'key': 'rzp_test_123',
+                'order_id': 'order_test_123',
+                'amount': 160000,
+                'currency': 'INR',
+                'description': 'Library fee payment for 2 months',
+                'student_name': self.student.name,
+                'student_email': self.student.email,
+                'student_contact': self.student.contact,
+                'seat_number': self.student.seat_number,
+                'library_name': 'Valmiki Library',
+                'months_requested': 2,
+            },
+        )
+        online_payment = StudentOnlinePayment.objects.get(student=self.student, razorpay_order_id='order_test_123')
+        self.assertEqual(online_payment.amount, Decimal('1600.00'))
+        self.assertEqual(online_payment.months_covered, 2)
+
+    @override_settings(
+        RAZORPAY_ENABLED=True,
+        RAZORPAY_KEY_ID='rzp_test_123',
+        RAZORPAY_KEY_SECRET='secret456',
+        RAZORPAY_CURRENCY='INR',
+    )
+    def test_student_online_payment_verification_marks_months_paid(self):
+        self.student.email_verified = True
+        self.student.save(update_fields=['email_verified'])
+
+        self.client.post(
+            reverse('student_portal_login'),
+            {
+                'name': self.student.name,
+                'email': self.student.email,
+                'contact': self.student.contact,
+                'date_of_birth': self.student.date_of_birth.isoformat(),
+                'action': 'login',
+            },
+        )
+
+        StudentOnlinePayment.objects.create(
+            student=self.student,
+            amount=Decimal('1600.00'),
+            currency='INR',
+            purpose='Library fee payment for 2 months',
+            months_covered=2,
+            razorpay_order_id='order_test_456',
+        )
+        signature = hmac.new(
+            b'secret456',
+            b'order_test_456|pay_test_456',
+            hashlib.sha256,
+        ).hexdigest()
+
+        response = self.client.post(
+            reverse('student_portal_verify_online_payment'),
+            {
+                'razorpay_order_id': 'order_test_456',
+                'razorpay_payment_id': 'pay_test_456',
+                'razorpay_signature': signature,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        online_payment = StudentOnlinePayment.objects.get(razorpay_order_id='order_test_456')
+        self.assertEqual(online_payment.status, 'paid')
+        self.assertEqual(
+            Payment.objects.filter(student=self.student, is_paid=True, payment_method='Online').count(),
+            2,
+        )
+
 
 class MentorPortalTests(TestCase):
     def setUp(self):
@@ -507,7 +730,9 @@ class MentorPortalTests(TestCase):
         detail_response = self.client.post(
             reverse('mentor_session_detail', args=[session.pk]),
             {
-                'status': 'Completed',
+                'status': 'Scheduled',
+                'preferred_date': '2026-05-09',
+                'scheduled_time': '18:30',
                 'meeting_link': 'https://meet.google.com/test-session',
                 'mentor_questions': 'Asked 10 questions from revolt of 1857.',
                 'mentor_feedback': 'Needs sharper recall on causes and consequences.',
@@ -519,10 +744,60 @@ class MentorPortalTests(TestCase):
         self.assertRedirects(detail_response, reverse('mentor_session_detail', args=[session.pk]))
 
         session.refresh_from_db()
-        self.assertEqual(session.status, 'Completed')
+        self.assertEqual(session.status, 'Scheduled')
         self.assertEqual(session.meeting_link, 'https://meet.google.com/test-session')
+        self.assertEqual(session.preferred_date, date(2026, 5, 9))
+        self.assertEqual(session.scheduled_time, time(18, 30))
         self.assertEqual(session.marks_awarded, Decimal('8.50'))
         self.assertIn('Needs sharper recall', session.mentor_feedback)
+        self.assertContains(self.client.get(reverse('mentor_session_detail', args=[session.pk])), reverse('mentorship_session_room', args=[session.pk]))
+
+    def test_mentor_can_email_join_details_to_student(self):
+        self.mentor.email_verified = True
+        self.mentor.save(update_fields=['email_verified'])
+
+        self.client.post(
+            reverse('mentor_portal_login'),
+            {
+                'email': self.mentor.email,
+                'contact': self.mentor.contact,
+                'action': 'login',
+            },
+        )
+
+        session = MentorshipSession.objects.create(
+            student=self.student,
+            mentor=self.mentor,
+            plan_type='Daily',
+            topic='Economy revision room',
+            student_study_notes='Revised inflation and fiscal deficit topics.',
+            preparation_target='UPSC',
+            preferred_date=date(2026, 5, 12),
+            scheduled_time=time(19, 45),
+            price=700,
+        )
+
+        response = self.client.post(
+            reverse('mentor_session_detail', args=[session.pk]),
+            {
+                'action': 'save_and_email',
+                'status': 'Scheduled',
+                'preferred_date': '2026-05-12',
+                'scheduled_time': '19:45',
+                'meeting_link': 'https://meet.google.com/economy-revision',
+                'mentor_questions': 'Inflation, repo rate, and deficit questions.',
+                'mentor_feedback': 'Good conceptual understanding.',
+                'price': '700',
+                'marks_awarded': '9.0',
+            },
+        )
+
+        self.assertRedirects(response, reverse('mentor_session_detail', args=[session.pk]))
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['mentee@example.com'])
+        self.assertIn('Economy revision room', mail.outbox[0].subject)
+        self.assertIn('https://meet.google.com/economy-revision', mail.outbox[0].body)
+        self.assertIn(reverse('mentorship_session_room', args=[session.pk]), mail.outbox[0].body)
 
 
 class StudentMentorshipPortalTests(TestCase):
@@ -590,3 +865,45 @@ class StudentMentorshipPortalTests(TestCase):
         page_response = self.client.get(reverse('student_portal_mentorship'))
         self.assertContains(page_response, 'Practice Mentor')
         self.assertContains(page_response, 'Quant speed practice')
+
+    def test_student_can_see_join_room_when_mentor_schedules_session(self):
+        session = MentorshipSession.objects.create(
+            student=self.student,
+            mentor=self.mentor,
+            plan_type='Daily',
+            topic='Mock interview practice',
+            student_study_notes='Revised HR answers and self-introduction.',
+            preparation_target='Banking',
+            preferred_date=date(2026, 5, 10),
+            scheduled_time=time(19, 0),
+            status='Scheduled',
+            price=self.mentor.daily_session_price,
+            meeting_link='https://meet.google.com/mock-interview',
+        )
+
+        page_response = self.client.get(reverse('student_portal_mentorship'))
+
+        self.assertContains(page_response, 'Join Live VC Room')
+        self.assertContains(page_response, reverse('mentorship_session_room', args=[session.pk]))
+        self.assertContains(page_response, 'Join Google Meet')
+
+    def test_student_can_open_embedded_session_room(self):
+        session = MentorshipSession.objects.create(
+            student=self.student,
+            mentor=self.mentor,
+            plan_type='Daily',
+            topic='Aptitude revision room',
+            student_study_notes='Need speed practice and oral questions.',
+            preparation_target='Banking',
+            preferred_date=date(2026, 5, 11),
+            scheduled_time=time(17, 15),
+            status='Scheduled',
+            price=self.mentor.daily_session_price,
+        )
+
+        room_response = self.client.get(reverse('mentorship_session_room', args=[session.pk]))
+
+        self.assertEqual(room_response.status_code, 200)
+        self.assertContains(room_response, 'Live Mentorship Room')
+        self.assertContains(room_response, session.live_room_name)
+        self.assertContains(room_response, 'Booked Student')

@@ -1,6 +1,8 @@
-Valmiki Smart Library Management System
+Valmiki Smart Library Management System      https://code0413.pythonanywhere.com
 A full-stack web application developed for managing a smart self-study library with seat allocation, student management, mentorship workflow, and administrative operations.
 
+
+ 
 🚀 Features
 Student Registration & Login
 Admin Dashboard
@@ -39,6 +41,8 @@ Monitor occupancy and seat availability
 Track payments and reports
 Manage library operations efficiently
 
+
+<img width="1440" height="900" alt="Screenshot 2026-05-10 at 10 28 24 PM" src="https://github.com/user-attachments/assets/6a29fa06-43f0-4ef1-b001-1e178661a4c6" />
 
 <img width="1440" height="900" alt="Screenshot 2026-05-10 at 10 26 32 PM" src="https://github.com/user-attachments/assets/80243726-4b5a-475e-a42e-cd601b5c55d2" />
 
